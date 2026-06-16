@@ -10,80 +10,82 @@ GroupAdd("Gothic", "ahk_exe GothicMod.exe")
 
 ; Set a callback to SetWinEventHook
 DllCall("user32\SetWinEventHook",
-    "Int", EVENT_SYSTEM_FOREGROUND := 0x0003,
-    "Int", EVENT_SYSTEM_FOREGROUND,
-    "Ptr", 0,
-    "Ptr", CallbackCreate(OnFocusChanged, "F"),
-    "Int", 0,
-    "Int", 0,
-    "Int", 0)
+	"Int", EVENT_SYSTEM_FOREGROUND := 0x0003,
+	"Int", EVENT_SYSTEM_FOREGROUND,
+	"Ptr", 0,
+	"Ptr", CallbackCreate(OnFocusChanged, "F"),
+	"Int", 0,
+	"Int", 0,
+	"Int", 0)
 
 OnExit(OnExitCallback)
 
 Buy()
 {
-    Send("{LButton down}")
-    Sleep(10)
-    Send("{LButton up}")
+	Send("{LButton down}")
+	Sleep(10)
+	Send("{LButton up}")
 }
 
 Cook(p_iStep := 1)
 {
-    if !WinActive(g_sWindowTitle)
-        return
+	if !WinActive(g_sWindowTitle)
+		return
 
-    switch p_iStep
-    {
-        ; Stop cooking
-        case 0:
-            Send("{f up}{s up}")
-            SetTimer(Cook, 0)
-        ; Start cooking then finish once the meat is in the pan
-        case 1:
-            Send("{f down}{s down}")
-            SetTimer(Cook.Bind(2), g_bCookToggle * -2000)
-        ; Finish cooking then start again once your character stands up
-        case 2:
-            Send("{f up}{s up}")
-            SetTimer(Cook, g_bCookToggle * -1200)
-    }
+	switch p_iStep
+	{
+		; Stop cooking
+		case 0:
+			Send("{f up}{s up}")
+			SetTimer(Cook, 0)
+		; Start cooking then finish once the meat is in the pan
+		case 1:
+			Send("{f down}{s down}")
+			SetTimer(Cook.Bind(2), g_bCookToggle * -2000)
+		; Finish cooking then start again once your character stands up
+		case 2:
+			Send("{f up}{s up}")
+			SetTimer(Cook, g_bCookToggle * -1200)
+	}
 }
 
 OnExitCallback(*)
 {
-    ReleaseAllKeys()
+	ReleaseAllKeys()
 }
 
 OnFocusChanged(hWinEventHook, vEvent, hWnd)
 {
-    if WinActive(g_sWindowTitle)
-    {
-        WinWaitNotActive(g_sWindowTitle)
-        ReleaseAllKeys()
-    }
+	if WinActive(g_sWindowTitle)
+	{
+		WinWaitNotActive(g_sWindowTitle)
+		ReleaseAllKeys()
+	}
 }
 
 ReleaseAllKeys()
 {
-    global g_bBuyToggle := 0
-    global g_bCookToggle := 0
-    Send("{f up}{s up}")
-    SetTimer(Buy, 0)
-    SetTimer(Cook, 0)
+	global g_bBuyToggle := 0
+	global g_bCookToggle := 0
+	Send("{f up}{s up}")
+	SetTimer(Buy, 0)
+	SetTimer(Cook, 0)
 }
 
 #HotIf WinActive(g_sWindowTitle)
 ~k up::
 {
-    global g_bBuyToggle ^= 1
-    Send("{f " (g_bBuyToggle ? "down}" : "up}"))
-    SetTimer(Buy, g_bBuyToggle * 20)
+	global g_bBuyToggle ^= 1
+	Send("{f " (g_bBuyToggle ? "down}" : "up}"))
+
+	; Spam left-click to buy items faster
+	SetTimer(Buy, g_bBuyToggle * 20)
 }
 
 ~l up::
 {
-    global g_bCookToggle ^= 1
-    Cook(g_bCookToggle)
+	global g_bCookToggle ^= 1
+	Cook(g_bCookToggle)
 }
 
 #SuspendExempt
@@ -96,16 +98,16 @@ ReleaseAllKeys()
 ; Suspend script (useful in menus)
 *~!F12:: ; ALT+F12
 {
-    Suspend()
+	Suspend()
 
-    ; Single beep when suspended
-    SoundBeep(1000, 100)
+	; Single beep when suspended
+	SoundBeep(1000, 100)
 
-    if (A_IsSuspended)
-        ReleaseAllKeys()
-    ; Double beep when resumed
-    else
-        SoundBeep(1000, 100)
+	if (A_IsSuspended)
+		ReleaseAllKeys()
+	; Double beep when resumed
+	else
+		SoundBeep(1000, 100)
 }
 #SuspendExempt False
 #HotIf
