@@ -29,9 +29,6 @@ Buy()
 
 Cook(p_iStep := 1)
 {
-	if !WinActive(g_sWindowTitle)
-		return
-
 	switch p_iStep
 	{
 		; Stop cooking
@@ -67,7 +64,7 @@ ReleaseAllKeys()
 {
 	global g_bBuyToggle := 0
 	global g_bCookToggle := 0
-	Send("{f up}{s up}")
+	Send("{f up}{s up}{w up}{MButton up}")
 	SetTimer(Buy, 0)
 	SetTimer(Cook, 0)
 }
@@ -86,6 +83,14 @@ ReleaseAllKeys()
 {
 	global g_bCookToggle ^= 1
 	Cook(g_bCookToggle)
+}
+
+; Pull out your weapon then hold the middle mouse button to continously attack the fastest way possible (only use it on enemies you can't parry)
+~MButton::
+{
+	Send("{f down}{s down}{w down}")
+	KeyWait("MButton")
+	Send("{f up}{s up}{w up}")
 }
 
 #SuspendExempt
