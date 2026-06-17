@@ -92,6 +92,7 @@ ReleaseAllKeys()
 	KeyWait("MButton")
 	Send("{f up}{s up}{w up}")
 }
+#HotIf
 
 #SuspendExempt
 ; Exit script
@@ -115,4 +116,3 @@ ReleaseAllKeys()
 		SoundBeep(1000, 100)
 }
 #SuspendExempt False
-#HotIf
