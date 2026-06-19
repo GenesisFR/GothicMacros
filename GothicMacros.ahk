@@ -1,8 +1,10 @@
 #Requires AutoHotkey v2.0
 #SingleInstance
 
+g_bAutorunToggle := 0
 g_bBuyToggle := 0
 g_bCookToggle := 0
+g_bJumpAutofireToggle := 0
 g_sWindowTitle := "ahk_group Gothic"
 
 GroupAdd("Gothic", "ahk_exe Gothic.exe")
@@ -46,6 +48,13 @@ Cook(p_iStep := 1)
 	}
 }
 
+Jump()
+{
+	Send("{Space down}")
+	Sleep(10)
+	Send("{Space up}")
+}
+
 OnExitCallback(*)
 {
 	ReleaseAllKeys()
@@ -62,30 +71,52 @@ OnFocusChanged(hWinEventHook, vEvent, hWnd)
 
 ReleaseAllKeys()
 {
-	global g_bBuyToggle := 0
-	global g_bCookToggle := 0
-	Send("{f up}{s up}{w up}{MButton up}")
+	global
+
+	; Release keys
+	g_bAutorunToggle := g_bBuyToggle := g_bCookToggle := g_bJumpAutofireToggle := 0
+	Send("{f up}{s up}{w up}{Space up}{MButton up}")
+
+	; Delete timers
 	SetTimer(Buy, 0)
 	SetTimer(Cook, 0)
+	SetTimer(Jump, 0)
 }
 
 #HotIf WinActive(g_sWindowTitle)
+~F1 up::
+{
+	global g_bAutorunToggle ^= 1
+	Send("{w " (g_bAutorunToggle ? "down}" : "up}"))
+}
+
+~F2 up::
+{
+	global g_bJumpAutofireToggle ^= 1
+	Send("{Space " (g_bJumpAutofireToggle ? "down}" : "up}"))
+
+	; Spam SPACE to continuously jump, should be combined with autorun
+	SetTimer(Jump, g_bJumpAutofireToggle * 500)
+}
+
+; Buy/Sell/Use in bulk (put the cursor on the desired item beforehand)
 ~k up::
 {
 	global g_bBuyToggle ^= 1
 	Send("{f " (g_bBuyToggle ? "down}" : "up}"))
 
-	; Spam left-click to buy items faster
+	; Spam left-click to buy/sell/use items faster
 	SetTimer(Buy, g_bBuyToggle * 20)
 }
 
+; Autocook (you must be looking at a fireplace/pan and be within range beforehand)
 ~l up::
 {
 	global g_bCookToggle ^= 1
 	Cook(g_bCookToggle)
 }
 
-; Pull out your weapon then hold the middle mouse button to continously attack the fastest way possible (only use it on enemies you can't parry)
+; Continously fast attack, use it preferably on enemies you can't parry (you must have your weapon pulled out beforehand)
 ~MButton::
 {
 	Send("{f down}{s down}{w down}")
