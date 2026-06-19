@@ -84,6 +84,9 @@ ReleaseAllKeys()
 }
 
 #HotIf WinActive(g_sWindowTitle)
+; Steam overlay
+~ScrollLock up::ReleaseAllKeys()
+
 ~F1 up::
 {
 	global g_bAutorunToggle ^= 1
