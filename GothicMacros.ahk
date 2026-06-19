@@ -5,6 +5,7 @@ g_bAutorunToggle := 0
 g_bBuyToggle := 0
 g_bCookToggle := 0
 g_bJumpAutofireToggle := 0
+g_bSteamOverlay := 0
 g_sWindowTitle := "ahk_group Gothic"
 
 GroupAdd("Gothic", "ahk_exe Gothic.exe")
@@ -85,8 +86,14 @@ ReleaseAllKeys()
 
 #HotIf WinActive(g_sWindowTitle)
 ; Steam overlay
-~ScrollLock up::ReleaseAllKeys()
+~ScrollLock up::
+{
+	global g_bSteamOverlay ^= 1
+	ReleaseAllKeys()
+}
+#HotIf
 
+#HotIf WinActive(g_sWindowTitle) && !g_bSteamOverlay
 ~F1 up::
 {
 	global g_bAutorunToggle ^= 1
