@@ -134,6 +134,23 @@ ReleaseAllKeys()
 	Send("{f up}{s up}{w up}")
 }
 
+; Turn off autobuy
+*~LButton up::
+*~Shift up::
+{
+	if (g_bBuyToggle)
+	{
+		global g_bBuyToggle := 0
+		SetTimer(Buy, 0)
+		ReleaseAllKeys()
+	}
+}
+
+; Turn off autorun
+*~s up::
+*~w up::global g_bAutorunToggle := 0
+#HotIf
+
 #SuspendExempt
 ; Exit script
 *~!F10::ExitApp() ; ALT+F10
