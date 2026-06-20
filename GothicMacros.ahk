@@ -76,7 +76,7 @@ ReleaseAllKeys()
 
 	; Release keys
 	g_bAutorunToggle := g_bBuyToggle := g_bCookToggle := g_bJumpAutofireToggle := 0
-	Send("{f up}{s up}{w up}{Space up}{MButton up}")
+	Send("{f up}{s up}{w up}{Shift up}{Space up}{LButton up}{MButton up}")
 
 	; Delete timers
 	SetTimer(Buy, 0)
@@ -113,10 +113,10 @@ ReleaseAllKeys()
 ~k up::
 {
 	global g_bBuyToggle ^= 1
-	Send("{f " (g_bBuyToggle ? "down}" : "up}"))
+	Send("{Shift " (g_bBuyToggle ? "down}" : "up}"))
 
 	; Spam left-click to buy/sell/use items faster
-	SetTimer(Buy, g_bBuyToggle * 20)
+	SetTimer(Buy, g_bBuyToggle * 100)
 }
 
 ; Autocook (you must be looking at a fireplace/pan and be within range beforehand)
