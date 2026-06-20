@@ -86,7 +86,7 @@ ReleaseAllKeys()
 
 #HotIf WinActive(g_sWindowTitle)
 ; Steam overlay
-~ScrollLock up::
+*~ScrollLock up::
 {
 	global g_bSteamOverlay ^= 1
 	ReleaseAllKeys()
@@ -94,13 +94,13 @@ ReleaseAllKeys()
 #HotIf
 
 #HotIf WinActive(g_sWindowTitle) && !g_bSteamOverlay
-~F1 up::
+*~F1 up::
 {
 	global g_bAutorunToggle ^= 1
 	Send("{w " (g_bAutorunToggle ? "down}" : "up}"))
 }
 
-~F2 up::
+*~F2 up::
 {
 	global g_bJumpAutofireToggle ^= 1
 	Send("{Space " (g_bJumpAutofireToggle ? "down}" : "up}"))
@@ -110,7 +110,7 @@ ReleaseAllKeys()
 }
 
 ; Buy/Sell/Use in bulk (put the cursor on the desired item beforehand)
-~k up::
+*~k up::
 {
 	global g_bBuyToggle ^= 1
 	Send("{Shift " (g_bBuyToggle ? "down}" : "up}"))
@@ -120,20 +120,19 @@ ReleaseAllKeys()
 }
 
 ; Autocook (you must be looking at a fireplace/pan and be within range beforehand)
-~l up::
+*~l up::
 {
 	global g_bCookToggle ^= 1
 	Cook(g_bCookToggle)
 }
 
 ; Continously fast attack, use it preferably on enemies you can't parry (you must have your weapon pulled out beforehand)
-~MButton::
+*~MButton::
 {
 	Send("{f down}{s down}{w down}")
 	KeyWait("MButton")
 	Send("{f up}{s up}{w up}")
 }
-#HotIf
 
 #SuspendExempt
 ; Exit script
