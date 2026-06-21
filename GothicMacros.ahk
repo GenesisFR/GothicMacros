@@ -157,6 +157,16 @@ ReleaseAllKeys()
 	Send("{Shift " (g_bWalkToggle ? "down}" : "up}"))
 }
 
+; Turn off autojump
+*~Space::
+{
+	if (g_bJumpAutofireToggle)
+	{
+		global g_bJumpAutofireToggle := 0
+		SetTimer(Jump, 0)
+	}
+}
+
 ; Turn off autorun
 *~w::global g_bAutorunToggle := 0
 #HotIf
