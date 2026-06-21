@@ -87,10 +87,12 @@ ReleaseAllKeys()
 
 #HotIf WinActive(g_sWindowTitle)
 ; Steam overlay
-*~ScrollLock up::
+*ScrollLock::
 {
 	global g_bSteamOverlay ^= 1
 	ReleaseAllKeys()
+	Send("{ScrollLock}")
+	KeyWait("ScrollLock")
 }
 #HotIf
 
