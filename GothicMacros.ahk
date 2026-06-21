@@ -135,20 +135,18 @@ ReleaseAllKeys()
 }
 
 ; Turn off autobuy
-*~LButton up::
-*~Shift up::
+*~LButton::
+*~Shift::
 {
 	if (g_bBuyToggle)
 	{
 		global g_bBuyToggle := 0
 		SetTimer(Buy, 0)
-		ReleaseAllKeys()
 	}
 }
 
 ; Turn off autorun
-*~s up::
-*~w up::global g_bAutorunToggle := 0
+*~w::global g_bAutorunToggle := 0
 #HotIf
 
 #SuspendExempt
