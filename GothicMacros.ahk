@@ -6,6 +6,7 @@ g_bBuyToggle := 0
 g_bCookToggle := 0
 g_bJumpAutofireToggle := 0
 g_bSteamOverlay := 0
+g_bWalkToggle := 0
 g_sWindowTitle := "ahk_group Gothic"
 
 GroupAdd("Gothic", "ahk_exe Gothic.exe")
@@ -75,7 +76,7 @@ ReleaseAllKeys()
 	global
 
 	; Release keys
-	g_bAutorunToggle := g_bBuyToggle := g_bCookToggle := g_bJumpAutofireToggle := 0
+	g_bAutorunToggle := g_bBuyToggle := g_bCookToggle := g_bJumpAutofireToggle := g_bWalkToggle := 0
 	Send("{f up}{s up}{w up}{Shift up}{Space up}{LButton up}{MButton up}")
 
 	; Delete timers
@@ -94,12 +95,14 @@ ReleaseAllKeys()
 #HotIf
 
 #HotIf WinActive(g_sWindowTitle) && !g_bSteamOverlay
+; Autorun
 *~F1 up::
 {
 	global g_bAutorunToggle ^= 1
 	Send("{w " (g_bAutorunToggle ? "down}" : "up}"))
 }
 
+; Autojump
 *~F2 up::
 {
 	global g_bJumpAutofireToggle ^= 1
@@ -109,7 +112,7 @@ ReleaseAllKeys()
 	SetTimer(Jump, g_bJumpAutofireToggle * 500)
 }
 
-; Buy/Sell/Use in bulk (put the cursor on the desired item beforehand)
+; Buy/Sell/Use in bulk (highlight the desired item beforehand)
 *~k up::
 {
 	global g_bBuyToggle ^= 1
@@ -143,6 +146,13 @@ ReleaseAllKeys()
 		global g_bBuyToggle := 0
 		SetTimer(Buy, 0)
 	}
+}
+
+; Walk toggle
+*~Shift up::
+{
+	global g_bWalkToggle ^= 1
+	Send("{Shift " (g_bWalkToggle ? "down}" : "up}"))
 }
 
 ; Turn off autorun
