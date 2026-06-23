@@ -1,13 +1,15 @@
 #Requires AutoHotkey v2.0
 #SingleInstance
 
-g_bAutorunToggle := 0
-g_bBuyToggle := 0
-g_bCookToggle := 0
-g_bJumpAutofireToggle := 0
-g_bSteamOverlay := 0
-g_bWalkToggle := 0
-g_sWindowTitle := "ahk_group Gothic"
+class ToggleStates
+{
+	static bAutobuy      := 0
+	static bAutocook     := 0
+	static bAutojump     := 0
+	static bAutorun      := 0
+	static bSteamOverlay := 0
+	static bWalk         := 0
+}
 
 Init()
 
@@ -16,6 +18,7 @@ Init()
 	; Window group for Gothic
 	GroupAdd("Gothic", "ahk_exe Gothic.exe")
 	GroupAdd("Gothic", "ahk_exe GothicMod.exe")
+	global g_sWindowTitle := "ahk_group Gothic"
 
 	ReadConfigFile()
 	RegisterHotkeys()
@@ -49,17 +52,17 @@ Cook(p_iStep := 1)
 		; Start cooking then finish once the meat is in the pan
 		case 1:
 			Send("{" g_sActionKey " down}{" g_sBackwardKey " down}")
-			SetTimer(Cook.Bind(2), g_bCookToggle * -2000)
+			SetTimer(Cook.Bind(2), ToggleStates.bAutocook * -2000)
 		; Finish cooking then start again once your character stands up
 		case 2:
 			Send("{" g_sActionKey " up}{" g_sBackwardKey " up}")
-			SetTimer(Cook, g_bCookToggle * -1200)
+			SetTimer(Cook, ToggleStates.bAutocook * -1200)
 	}
 }
 
 Forward(*)
 {
-	global g_bAutorunToggle := 0
+	ToggleStates.bAutorun := 0
 }
 
 ; Continously fast attack, use it preferably on enemies you can't parry (you must have your weapon pulled out beforehand)
@@ -74,9 +77,9 @@ HoldFastAttack(p_sThisHotkey)
 ; Turn off autojump
 Jump(*)
 {
-	if (g_bJumpAutofireToggle)
+	if (ToggleStates.bAutojump)
 	{
-		global g_bJumpAutofireToggle := 0
+		ToggleStates.bAutojump := 0
 		SetTimer(SendJump, 0)
 	}
 }
@@ -131,12 +134,13 @@ RegisterHotkey(p_sPrefix, p_sHotkey, p_fnAction, p_sSuffix := "")
 
 RegisterHotkeys()
 {
-	; Hotkeys are fired only when Gothic is the active window
+	; Hotkeys fired only when Gothic is the active window
 	HotIfWinActive(g_sWindowTitle)
-	RegisterHotkey("*", g_sSteamOverlayKey, SteamOverlay)
+	RegisterHotkey("*", g_sSteamOverlayKey, ToggleSteamOverlay)
 	HotIfWinActive()
 
-	HotIf((*) => WinActive(g_sWindowTitle) && !g_bSteamOverlay)
+	; Hotkeys fired only when Gothic is the active window and the Steam overlay is not in the foreground
+	HotIf((*) => WinActive(g_sWindowTitle) && !ToggleStates.bSteamOverlay)
 	RegisterHotkey("*~", g_sFastAttackKey, HoldFastAttack)
 	RegisterHotkey("*~", g_sForwardKey, Forward)
 	RegisterHotkey("*~", g_sJumpKey, Jump)
@@ -152,8 +156,10 @@ ReleaseAllKeys()
 {
 	global
 
+	; Reset toggle states
+	ToggleStates.bAutobuy := ToggleStates.bAutocook := ToggleStates.bAutojump := ToggleStates.bAutorun := ToggleStates.bWalk := 0
+
 	; Release keys
-	g_bAutorunToggle := g_bBuyToggle := g_bCookToggle := g_bJumpAutofireToggle := g_bWalkToggle := 0
 	Send("{" g_sActionKey " up}{" g_sBackwardKey " up}{" g_sFastAttackKey " up}{" g_sForwardKey " up}{" g_sJumpKey " up}{LButton up}{Shift up}")
 
 	; Delete timers
@@ -176,9 +182,41 @@ SendLeftMouseButton()
 	Send("{LButton up}")
 }
 
-SteamOverlay(p_sThisHotkey)
+; Buy/Sell/Use in bulk (highlight the desired item beforehand)
+ToggleAutobuy(*)
 {
-	global g_bSteamOverlay ^= 1
+	ToggleStates.bAutobuy ^= 1
+	Send("{Shift " (ToggleStates.bAutobuy ? "down}" : "up}"))
+
+	; Spam left-click to buy/sell/use items faster
+	SetTimer(SendLeftMouseButton, ToggleStates.bAutobuy * g_iAutobuyClickFrequency)
+}
+
+; Autocook (you must be looking at a fireplace/pan and be within range beforehand)
+ToggleAutocook(*)
+{
+	ToggleStates.bAutocook ^= 1
+	Cook(ToggleStates.bAutocook)
+}
+
+ToggleAutojump(*)
+{
+	ToggleStates.bAutojump ^= 1
+	Send("{" g_sJumpKey (ToggleStates.bAutojump ? "down}" : "up}"))
+
+	; Continuously spam jump, should be combined with autorun
+	SetTimer(SendJump, ToggleStates.bAutojump * 500)
+}
+
+ToggleAutorun(*)
+{
+	ToggleStates.bAutorun ^= 1
+	Send("{" g_sForwardKey (ToggleStates.bAutorun ? " down}" : " up}"))
+}
+
+ToggleSteamOverlay(p_sThisHotkey)
+{
+	ToggleStates.bSteamOverlay ^= 1
 	ReleaseAllKeys()
 
 	l_sCleanHotkey := CleanHotkey(p_sThisHotkey)
@@ -186,52 +224,20 @@ SteamOverlay(p_sThisHotkey)
 	KeyWait(l_sCleanHotkey)
 }
 
-; Buy/Sell/Use in bulk (highlight the desired item beforehand)
-ToggleAutobuy(*)
-{
-	global g_bBuyToggle ^= 1
-	Send("{Shift " (g_bBuyToggle ? "down}" : "up}"))
-
-	; Spam left-click to buy/sell/use items faster
-	SetTimer(SendLeftMouseButton, g_bBuyToggle * g_iAutobuyClickFrequency)
-}
-
-; Autocook (you must be looking at a fireplace/pan and be within range beforehand)
-ToggleAutocook(*)
-{
-	global g_bCookToggle ^= 1
-	Cook(g_bCookToggle)
-}
-
-ToggleAutojump(*)
-{
-	global g_bJumpAutofireToggle ^= 1
-	Send("{" g_sJumpKey (g_bJumpAutofireToggle ? "down}" : "up}"))
-
-	; Continuously spam jump, should be combined with autorun
-	SetTimer(SendJump, g_bJumpAutofireToggle * 500)
-}
-
-ToggleAutorun(*)
-{
-	global g_bAutorunToggle ^= 1
-	Send("{" g_sForwardKey (g_bAutorunToggle ? " down}" : " up}"))
-}
-
 ToggleWalk(p_sThisHotkey)
 {
-	global g_bWalkToggle ^= 1
+	ToggleStates.bWalk ^= 1
 	l_sCleanHotkey := CleanHotkey(p_sThisHotkey)
-	Send("{" l_sCleanHotkey (g_bWalkToggle ? " down}" : " up}"))
+	Send("{" l_sCleanHotkey (ToggleStates.bWalk ? " down}" : " up}"))
 }
 
 ; Turn off autobuy
 *~LButton::
 *~Shift::
 {
-	if (g_bBuyToggle)
+	if (ToggleStates.bAutobuy)
 	{
-		global g_bBuyToggle := 0
+		ToggleStates.bAutobuy := 0
 		SetTimer(SendLeftMouseButton, 0)
 	}
 }
