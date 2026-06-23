@@ -97,7 +97,8 @@ ReadConfigFile()
 	local l_sConfigFile := "GothicMacros.ini"
 
 	; General
-	g_bBeepOnSuspend := IniRead(l_sConfigFile, "General", "bBeepOnSuspend", true) == true
+	g_bBeepOnSuspend         := IniRead(l_sConfigFile, "General", "bBeepOnSuspend", true) == true
+	g_iAutobuyClickFrequency := IniRead(l_sConfigFile, "General", "iAutobuyClickFrequency", 100)
 
 	; Mandatory Keys
 	g_sActionKey         := IniRead(l_sConfigFile, "MandatoryKeys", "sActionKey", "f")
@@ -113,6 +114,10 @@ ReadConfigFile()
 	g_sToggleAutojumpKey := IniRead(l_sConfigFile, "OptionalKeys", "sToggleAutojumpKey", "")
 	g_sToggleAutorunKey  := IniRead(l_sConfigFile, "OptionalKeys", "sToggleAutorunKey", "")
 	g_sToggleWalkKey     := IniRead(l_sConfigFile, "OptionalKeys", "sToggleWalkKey", "")
+
+	; Prevent some variables from being negative or set to 0, otherwise timers won't work
+	if !IsInteger(g_iAutobuyClickFrequency) g_iAutobuyClickFrequency := 100
+	g_iAutobuyClickFrequency := Max(g_iAutobuyClickFrequency, 1)
 }
 
 RegisterHotkey(p_sPrefix, p_sHotkey, p_fnAction, p_sSuffix := "")
@@ -188,7 +193,7 @@ ToggleAutobuy(*)
 	Send("{Shift " (g_bBuyToggle ? "down}" : "up}"))
 
 	; Spam left-click to buy/sell/use items faster
-	SetTimer(SendLeftMouseButton, g_bBuyToggle * 100)
+	SetTimer(SendLeftMouseButton, g_bBuyToggle * g_iAutobuyClickFrequency)
 }
 
 ; Autocook (you must be looking at a fireplace/pan and be within range beforehand)
