@@ -9,26 +9,33 @@ g_bSteamOverlay := 0
 g_bWalkToggle := 0
 g_sWindowTitle := "ahk_group Gothic"
 
-GroupAdd("Gothic", "ahk_exe Gothic.exe")
-GroupAdd("Gothic", "ahk_exe GothicMod.exe")
+Init()
 
-; Set a callback to SetWinEventHook
-DllCall("user32\SetWinEventHook",
-	"Int", EVENT_SYSTEM_FOREGROUND := 0x0003,
-	"Int", EVENT_SYSTEM_FOREGROUND,
-	"Ptr", 0,
-	"Ptr", CallbackCreate(OnFocusChanged, "F"),
-	"Int", 0,
-	"Int", 0,
-	"Int", 0)
-
-OnExit(OnExitCallback)
-
-Buy()
+Init()
 {
-	Send("{LButton down}")
-	Sleep(10)
-	Send("{LButton up}")
+	; Window group for Gothic
+	GroupAdd("Gothic", "ahk_exe Gothic.exe")
+	GroupAdd("Gothic", "ahk_exe GothicMod.exe")
+
+	ReadConfigFile()
+	RegisterHotkeys()
+
+	; Set an event hook to detect when the game window loses focus
+	DllCall("user32\SetWinEventHook",
+			"Int", EVENT_SYSTEM_FOREGROUND := 0x0003,
+			"Int", EVENT_SYSTEM_FOREGROUND,
+			"Ptr", 0,
+			"Ptr", CallbackCreate(OnFocusChanged, "F"),
+			"Int", 0,
+			"Int", 0,
+			"Int", 0)
+
+	OnExit((*) => ReleaseAllKeys())
+}
+
+CleanHotkey(p_sThisHotkey)
+{
+	return LTrim(RTrim(p_sThisHotkey, " up"), "~*$")
 }
 
 Cook(p_iStep := 1)
@@ -37,29 +44,41 @@ Cook(p_iStep := 1)
 	{
 		; Stop cooking
 		case 0:
-			Send("{f up}{s up}")
+			Send("{" g_sActionKey " up}{" g_sBackwardKey " up}")
 			SetTimer(Cook, 0)
 		; Start cooking then finish once the meat is in the pan
 		case 1:
-			Send("{f down}{s down}")
+			Send("{" g_sActionKey " down}{" g_sBackwardKey " down}")
 			SetTimer(Cook.Bind(2), g_bCookToggle * -2000)
 		; Finish cooking then start again once your character stands up
 		case 2:
-			Send("{f up}{s up}")
+			Send("{" g_sActionKey " up}{" g_sBackwardKey " up}")
 			SetTimer(Cook, g_bCookToggle * -1200)
 	}
 }
 
-Jump()
+Forward(*)
 {
-	Send("{Space down}")
-	Sleep(10)
-	Send("{Space up}")
+	global g_bAutorunToggle := 0
 }
 
-OnExitCallback(*)
+; Continously fast attack, use it preferably on enemies you can't parry (you must have your weapon pulled out beforehand)
+HoldFastAttack(p_sThisHotkey)
 {
-	ReleaseAllKeys()
+	Send("{" g_sActionKey " down}{" g_sBackwardKey " down}{" g_sForwardKey " down}")
+	l_sCleanHotkey := CleanHotkey(p_sThisHotkey)
+	KeyWait(l_sCleanHotkey)
+	Send("{" g_sActionKey " up}{" g_sBackwardKey " up}{" g_sForwardKey " up}")
+}
+
+; Turn off autojump
+Jump(*)
+{
+	if (g_bJumpAutofireToggle)
+	{
+		global g_bJumpAutofireToggle := 0
+		SetTimer(SendJump, 0)
+	}
 }
 
 OnFocusChanged(hWinEventHook, vEvent, hWnd)
@@ -71,72 +90,134 @@ OnFocusChanged(hWinEventHook, vEvent, hWnd)
 	}
 }
 
+ReadConfigFile()
+{
+	global
+
+	local l_sConfigFile := "GothicMacros.ini"
+
+	; General
+	g_bBeepOnSuspend := IniRead(l_sConfigFile, "General", "bBeepOnSuspend", true) == true
+
+	; Mandatory Keys
+	g_sActionKey         := IniRead(l_sConfigFile, "MandatoryKeys", "sActionKey", "f")
+	g_sBackwardKey       := IniRead(l_sConfigFile, "MandatoryKeys", "sBackwardKey", "s")
+	g_sForwardKey        := IniRead(l_sConfigFile, "MandatoryKeys", "sForwardKey", "w")
+	g_sJumpKey           := IniRead(l_sConfigFile, "MandatoryKeys", "sJumpKey", "Space")
+	g_sSteamOverlayKey   := IniRead(l_sConfigFile, "MandatoryKeys", "sSteamOverlayKey", "ScrollLock")
+
+	; Optional Keys
+	g_sFastAttackKey     := IniRead(l_sConfigFile, "OptionalKeys", "sFastAttackKey", "")
+	g_sToggleAutobuyKey  := IniRead(l_sConfigFile, "OptionalKeys", "sToggleAutobuyKey", "")
+	g_sToggleAutocookKey := IniRead(l_sConfigFile, "OptionalKeys", "sToggleAutocookKey", "")
+	g_sToggleAutojumpKey := IniRead(l_sConfigFile, "OptionalKeys", "sToggleAutojumpKey", "")
+	g_sToggleAutorunKey  := IniRead(l_sConfigFile, "OptionalKeys", "sToggleAutorunKey", "")
+	g_sToggleWalkKey     := IniRead(l_sConfigFile, "OptionalKeys", "sToggleWalkKey", "")
+}
+
+RegisterHotkey(p_sPrefix, p_sHotkey, p_fnAction, p_sSuffix := "")
+{
+	; If the hotkey is empty, don't register it
+	if (!p_sHotkey)
+		return
+	
+	Hotkey(p_sPrefix p_sHotkey p_sSuffix, p_fnAction, "On")
+}
+
+RegisterHotkeys()
+{
+	; Hotkeys are fired only when Gothic is the active window
+	HotIfWinActive(g_sWindowTitle)
+	RegisterHotkey("*", g_sSteamOverlayKey, SteamOverlay)
+	HotIfWinActive()
+
+	HotIf((*) => WinActive(g_sWindowTitle) && !g_bSteamOverlay)
+	RegisterHotkey("*~", g_sFastAttackKey, HoldFastAttack)
+	RegisterHotkey("*~", g_sForwardKey, Forward)
+	RegisterHotkey("*~", g_sJumpKey, Jump)
+	RegisterHotkey("*~", g_sToggleAutobuyKey, ToggleAutobuy, " up")
+	RegisterHotkey("*~", g_sToggleAutocookKey, ToggleAutocook, " up")
+	RegisterHotkey("*~", g_sToggleAutojumpKey, ToggleAutojump, " up")
+	RegisterHotkey("*~", g_sToggleAutorunKey, ToggleAutorun, " up")
+	RegisterHotkey("*~", g_sToggleWalkKey, ToggleWalk, " up")
+	HotIf()
+}
+
 ReleaseAllKeys()
 {
 	global
 
 	; Release keys
 	g_bAutorunToggle := g_bBuyToggle := g_bCookToggle := g_bJumpAutofireToggle := g_bWalkToggle := 0
-	Send("{f up}{s up}{w up}{Shift up}{Space up}{LButton up}{MButton up}")
+	Send("{" g_sActionKey " up}{" g_sBackwardKey " up}{" g_sFastAttackKey " up}{" g_sForwardKey " up}{" g_sJumpKey " up}{LButton up}{Shift up}")
 
 	; Delete timers
-	SetTimer(Buy, 0)
+	SetTimer(SendLeftMouseButton, 0)
 	SetTimer(Cook, 0)
-	SetTimer(Jump, 0)
+	SetTimer(SendJump, 0)
 }
 
-#HotIf WinActive(g_sWindowTitle)
-; Steam overlay
-*ScrollLock::
+SendJump()
+{
+	Send("{" g_sJumpKey " down}")
+	Sleep(25)
+	Send("{" g_sJumpKey " up}")
+}
+
+SendLeftMouseButton()
+{
+	Send("{LButton down}")
+	Sleep(25)
+	Send("{LButton up}")
+}
+
+SteamOverlay(p_sThisHotkey)
 {
 	global g_bSteamOverlay ^= 1
 	ReleaseAllKeys()
-	Send("{ScrollLock}")
-	KeyWait("ScrollLock")
-}
-#HotIf
 
-#HotIf WinActive(g_sWindowTitle) && !g_bSteamOverlay
-; Autorun
-*~F1 up::
-{
-	global g_bAutorunToggle ^= 1
-	Send("{w " (g_bAutorunToggle ? "down}" : "up}"))
-}
-
-; Autojump
-*~F2 up::
-{
-	global g_bJumpAutofireToggle ^= 1
-	Send("{Space " (g_bJumpAutofireToggle ? "down}" : "up}"))
-
-	; Spam SPACE to continuously jump, should be combined with autorun
-	SetTimer(Jump, g_bJumpAutofireToggle * 500)
+	l_sCleanHotkey := CleanHotkey(p_sThisHotkey)
+	Send("{" l_sCleanHotkey "}")
+	KeyWait(l_sCleanHotkey)
 }
 
 ; Buy/Sell/Use in bulk (highlight the desired item beforehand)
-*~k up::
+ToggleAutobuy(*)
 {
 	global g_bBuyToggle ^= 1
 	Send("{Shift " (g_bBuyToggle ? "down}" : "up}"))
 
 	; Spam left-click to buy/sell/use items faster
-	SetTimer(Buy, g_bBuyToggle * 100)
+	SetTimer(SendLeftMouseButton, g_bBuyToggle * 100)
 }
 
 ; Autocook (you must be looking at a fireplace/pan and be within range beforehand)
-*~l up::
+ToggleAutocook(*)
 {
 	global g_bCookToggle ^= 1
 	Cook(g_bCookToggle)
 }
 
-; Continously fast attack, use it preferably on enemies you can't parry (you must have your weapon pulled out beforehand)
-*~MButton::
+ToggleAutojump(*)
 {
-	Send("{f down}{s down}{w down}")
-	KeyWait("MButton")
-	Send("{f up}{s up}{w up}")
+	global g_bJumpAutofireToggle ^= 1
+	Send("{" g_sJumpKey (g_bJumpAutofireToggle ? "down}" : "up}"))
+
+	; Continuously spam jump, should be combined with autorun
+	SetTimer(SendJump, g_bJumpAutofireToggle * 500)
+}
+
+ToggleAutorun(*)
+{
+	global g_bAutorunToggle ^= 1
+	Send("{" g_sForwardKey (g_bAutorunToggle ? " down}" : " up}"))
+}
+
+ToggleWalk(p_sThisHotkey)
+{
+	global g_bWalkToggle ^= 1
+	l_sCleanHotkey := CleanHotkey(p_sThisHotkey)
+	Send("{" l_sCleanHotkey (g_bWalkToggle ? " down}" : " up}"))
 }
 
 ; Turn off autobuy
@@ -146,30 +227,9 @@ ReleaseAllKeys()
 	if (g_bBuyToggle)
 	{
 		global g_bBuyToggle := 0
-		SetTimer(Buy, 0)
+		SetTimer(SendLeftMouseButton, 0)
 	}
 }
-
-; Walk toggle
-*~Shift up::
-{
-	global g_bWalkToggle ^= 1
-	Send("{Shift " (g_bWalkToggle ? "down}" : "up}"))
-}
-
-; Turn off autojump
-*~Space::
-{
-	if (g_bJumpAutofireToggle)
-	{
-		global g_bJumpAutofireToggle := 0
-		SetTimer(Jump, 0)
-	}
-}
-
-; Turn off autorun
-*~w::global g_bAutorunToggle := 0
-#HotIf
 
 #SuspendExempt
 ; Exit script
@@ -184,12 +244,16 @@ ReleaseAllKeys()
 	Suspend()
 
 	; Single beep when suspended
-	SoundBeep(1000, 100)
+	if (g_bBeepOnSuspend)
+		SoundBeep(1000, 100)
 
 	if (A_IsSuspended)
 		ReleaseAllKeys()
 	; Double beep when resumed
 	else
-		SoundBeep(1000, 100)
+	{
+		if (g_bBeepOnSuspend)
+			SoundBeep(1000, 100)
+	}
 }
 #SuspendExempt False
