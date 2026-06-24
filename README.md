@@ -13,7 +13,7 @@ Make sure your hotkeys are the same than the ones in-game (otherwise they won't 
 
 It features the following macros that are only active when the game's window is active, but also automatically disabled/stopped when alt-tabbing or bringing up the Steam overlay.
 
-- **autobuy (toggle)**: holds `Shift + LButton + Action` to allow you to buy stacks of 100 items faster. It can also be used to sell items faster and use consumables. The clicking speed is customizable. Automatically disabled when manually pressing `Escape`, `LButton`, `RButton` or `Shift`.
+- **autobuy (toggle)**: holds `Shift + Action` and spams `LButton` to allow you to buy stacks of 100 items faster. It can also be used to sell items faster and use consumables. The clicking speed is customizable. Automatically disabled when manually pressing `Escape`, `LButton`, `RButton` or `Shift`.
 - **autocook (toggle)**: your character can only cook meat one at a time, so you can start the macro and come back later. You need to make sure you're looking at a pan beforehand.
 - **autojump (toggle)**: combine it with autorun to cover long distances faster without having to hold any key. Drawing your weapon while going up makes it even more effective. Automatically disabled when manually pressing `Jump`.
 - **autorun (toggle)**: self-explanatory. Automatically disabled when manually pressing `Forward`.
