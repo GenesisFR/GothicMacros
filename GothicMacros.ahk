@@ -36,9 +36,9 @@ Init()
 	OnExit((*) => ReleaseAllKeys())
 }
 
-CleanHotkey(p_sThisHotkey)
+CleanHotkey(p_sHotkey)
 {
-	return LTrim(RTrim(p_sThisHotkey, " up"), "~*$")
+	return LTrim(RTrim(p_sHotkey, " up"), "~*$")
 }
 
 Cook(p_iStep := 1)
@@ -69,7 +69,7 @@ HoldFastAttack(p_sThisHotkey)
 	Send("{" g_sActionKey " up}{" g_sBackwardKey " up}{" g_sForwardKey " up}")
 }
 
-OnFocusChanged(hWinEventHook, vEvent, hWnd)
+OnFocusChanged(*)
 {
 	if WinActive(g_sWindowTitle)
 	{
@@ -83,14 +83,10 @@ OnForwardPress(*)
 	ToggleStates.bAutorun := 0
 }
 
+; Turn off autojump
 OnJumpPress(*)
 {
-	; Turn off autojump
-	if (ToggleStates.bAutojump)
-	{
-		ToggleStates.bAutojump := 0
-		SetTimer(SendJump, 0)
-	}
+	SetTimer(SendJump, ToggleStates.bAutojump := 0)
 }
 
 ReadConfigFile()
@@ -100,7 +96,7 @@ ReadConfigFile()
 	local l_sConfigFile := "GothicMacros.ini"
 
 	; General
-	g_bBeepOnSuspend         := IniRead(l_sConfigFile, "General", "bBeepOnSuspend", true) == true
+	g_bBeepOnSuspend := IniRead(l_sConfigFile, "General", "bBeepOnSuspend", true) == true
 	if !IsInteger(g_iAutobuyClickFrequency := IniRead(l_sConfigFile, "General", "iAutobuyClickFrequency", 100))
 		g_iAutobuyClickFrequency := 100
 
@@ -152,8 +148,6 @@ RegisterHotkeys()
 
 ReleaseAllKeys()
 {
-	global
-
 	; Reset toggle states
 	ToggleStates.bAutobuy := ToggleStates.bAutocook := ToggleStates.bAutojump := ToggleStates.bAutorun := ToggleStates.bWalk := 0
 
@@ -183,8 +177,7 @@ SendLeftMouseButton()
 ; Buy/Sell/Use in bulk (highlight the desired item beforehand)
 ToggleAutobuy(*)
 {
-	ToggleStates.bAutobuy ^= 1
-	Send("{Shift " (ToggleStates.bAutobuy ? "down}" : "up}"))
+	Send("{Shift " ((ToggleStates.bAutobuy ^= 1) ? "down}" : "up}"))
 
 	; Spam left-click to buy/sell/use items faster
 	SetTimer(SendLeftMouseButton, ToggleStates.bAutobuy * g_iAutobuyClickFrequency)
@@ -193,14 +186,12 @@ ToggleAutobuy(*)
 ; Autocook (you must be looking at a fireplace/pan and be within range beforehand)
 ToggleAutocook(*)
 {
-	ToggleStates.bAutocook ^= 1
-	Cook(ToggleStates.bAutocook)
+	Cook(ToggleStates.bAutocook ^= 1)
 }
 
 ToggleAutojump(*)
 {
-	ToggleStates.bAutojump ^= 1
-	Send("{" g_sJumpKey (ToggleStates.bAutojump ? "down}" : "up}"))
+	Send("{" g_sJumpKey ((ToggleStates.bAutojump ^= 1) ? "down}" : "up}"))
 
 	; Continuously spam jump, should be combined with autorun
 	SetTimer(SendJump, ToggleStates.bAutojump * 500)
@@ -208,8 +199,7 @@ ToggleAutojump(*)
 
 ToggleAutorun(*)
 {
-	ToggleStates.bAutorun ^= 1
-	Send("{" g_sForwardKey (ToggleStates.bAutorun ? " down}" : " up}"))
+	Send("{" g_sForwardKey ((ToggleStates.bAutorun ^= 1) ? " down}" : " up}"))
 }
 
 ToggleSteamOverlay(p_sThisHotkey)
@@ -224,21 +214,12 @@ ToggleSteamOverlay(p_sThisHotkey)
 
 ToggleWalk(p_sThisHotkey)
 {
-	ToggleStates.bWalk ^= 1
 	l_sCleanHotkey := CleanHotkey(p_sThisHotkey)
-	Send("{" l_sCleanHotkey (ToggleStates.bWalk ? " down}" : " up}"))
+	Send("{" l_sCleanHotkey ((ToggleStates.bWalk ^= 1) ? " down}" : " up}"))
 }
 
 *~LButton::
-*~Shift::
-{
-	; Turn off autobuy
-	if (ToggleStates.bAutobuy)
-	{
-		ToggleStates.bAutobuy := 0
-		SetTimer(SendLeftMouseButton, 0)
-	}
-}
+*~Shift::SetTimer(SendLeftMouseButton, ToggleStates.bAutobuy := 0)
 
 #SuspendExempt
 ; Exit script
