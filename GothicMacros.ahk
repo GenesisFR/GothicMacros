@@ -78,13 +78,13 @@ OnFocusChanged(*)
 	}
 }
 
-OnForwardPress(*)
+OnManualForwardPress(*)
 {
 	ToggleStates.bAutorun := 0
 }
 
 ; Turn off autojump
-OnJumpPress(*)
+OnManualJumpPress(*)
 {
 	SetTimer(SendJump, ToggleStates.bAutojump := 0)
 }
@@ -136,8 +136,8 @@ RegisterHotkeys()
 	; Hotkeys fired only when Gothic is the active window and the Steam overlay is not in the foreground
 	HotIf((*) => WinActive(g_sWindowTitle) && !ToggleStates.bSteamOverlay)
 		RegisterHotkey("*~", g_sFastAttackKey, HoldFastAttack)
-		RegisterHotkey("*~", g_sForwardKey, OnForwardPress)
-		RegisterHotkey("*~", g_sJumpKey, OnJumpPress)
+		RegisterHotkey("*~", g_sForwardKey, OnManualForwardPress)
+		RegisterHotkey("*~", g_sJumpKey, OnManualJumpPress)
 		RegisterHotkey("*~", g_sToggleAutobuyKey, ToggleAutobuy, " up")
 		RegisterHotkey("*~", g_sToggleAutocookKey, ToggleAutocook, " up")
 		RegisterHotkey("*~", g_sToggleAutojumpKey, ToggleAutojump, " up")
@@ -155,23 +155,26 @@ ReleaseAllKeys()
 	Send("{" g_sActionKey " up}{" g_sBackwardKey " up}{" g_sFastAttackKey " up}{" g_sForwardKey " up}{" g_sJumpKey " up}{LButton up}{Shift up}")
 
 	; Delete timers
-	SetTimer(SendLeftMouseButton, 0)
 	SetTimer(Cook, 0)
 	SetTimer(SendJump, 0)
+	SetTimer(SendLeftMouseButton, 0)
 }
 
 SendJump()
 {
-	Send("{" g_sJumpKey " down}")
+	SendKey(g_sJumpKey)
+}
+
+SendKey(p_sKey)
+{
+	Send("{" p_sKey " down}")
 	Sleep(25)
-	Send("{" g_sJumpKey " up}")
+	Send("{" p_sKey " up}")
 }
 
 SendLeftMouseButton()
 {
-	Send("{LButton down}")
-	Sleep(25)
-	Send("{LButton up}")
+	SendKey("LButton")
 }
 
 ; Buy/Sell/Use in bulk (highlight the desired item beforehand)
@@ -218,8 +221,17 @@ ToggleWalk(p_sThisHotkey)
 	Send("{" l_sCleanHotkey ((ToggleStates.bWalk ^= 1) ? " down}" : " up}"))
 }
 
+*~Escape::
 *~LButton::
-*~Shift::SetTimer(SendLeftMouseButton, ToggleStates.bAutobuy := 0)
+*~RButton::
+*~Shift::
+{
+	if (ToggleStates.bAutobuy)
+	{
+		SetTimer(SendLeftMouseButton, ToggleStates.bAutobuy := 0)
+		Send("{Shift up}{LButton up}")
+	}
+}
 
 #SuspendExempt
 ; Exit script
