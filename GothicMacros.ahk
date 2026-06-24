@@ -60,11 +60,6 @@ Cook(p_iStep := 1)
 	}
 }
 
-Forward(*)
-{
-	ToggleStates.bAutorun := 0
-}
-
 ; Continously fast attack, use it preferably on enemies you can't parry (you must have your weapon pulled out beforehand)
 HoldFastAttack(p_sThisHotkey)
 {
@@ -72,16 +67,6 @@ HoldFastAttack(p_sThisHotkey)
 	l_sCleanHotkey := CleanHotkey(p_sThisHotkey)
 	KeyWait(l_sCleanHotkey)
 	Send("{" g_sActionKey " up}{" g_sBackwardKey " up}{" g_sForwardKey " up}")
-}
-
-; Turn off autojump
-Jump(*)
-{
-	if (ToggleStates.bAutojump)
-	{
-		ToggleStates.bAutojump := 0
-		SetTimer(SendJump, 0)
-	}
 }
 
 OnFocusChanged(hWinEventHook, vEvent, hWnd)
@@ -93,6 +78,21 @@ OnFocusChanged(hWinEventHook, vEvent, hWnd)
 	}
 }
 
+OnForwardPress(*)
+{
+	ToggleStates.bAutorun := 0
+}
+
+OnJumpPress(*)
+{
+	; Turn off autojump
+	if (ToggleStates.bAutojump)
+	{
+		ToggleStates.bAutojump := 0
+		SetTimer(SendJump, 0)
+	}
+}
+
 ReadConfigFile()
 {
 	global
@@ -101,7 +101,8 @@ ReadConfigFile()
 
 	; General
 	g_bBeepOnSuspend         := IniRead(l_sConfigFile, "General", "bBeepOnSuspend", true) == true
-	g_iAutobuyClickFrequency := IniRead(l_sConfigFile, "General", "iAutobuyClickFrequency", 100)
+	if !IsInteger(g_iAutobuyClickFrequency := IniRead(l_sConfigFile, "General", "iAutobuyClickFrequency", 100))
+		g_iAutobuyClickFrequency := 100
 
 	; Mandatory Keys
 	g_sActionKey         := IniRead(l_sConfigFile, "MandatoryKeys", "sActionKey", "f")
@@ -119,36 +120,33 @@ ReadConfigFile()
 	g_sToggleWalkKey     := IniRead(l_sConfigFile, "OptionalKeys", "sToggleWalkKey", "")
 
 	; Prevent some variables from being negative or set to 0, otherwise timers won't work
-	if !IsInteger(g_iAutobuyClickFrequency) g_iAutobuyClickFrequency := 100
 	g_iAutobuyClickFrequency := Max(g_iAutobuyClickFrequency, 1)
 }
 
 RegisterHotkey(p_sPrefix, p_sHotkey, p_fnAction, p_sSuffix := "")
 {
-	; If the hotkey is empty, don't register it
-	if (!p_sHotkey)
-		return
-	
-	Hotkey(p_sPrefix p_sHotkey p_sSuffix, p_fnAction, "On")
+	; If the hotkey is empty, don't register it (allows keys like toggles to be optional)
+	if (p_sHotkey)
+		Hotkey(p_sPrefix p_sHotkey p_sSuffix, p_fnAction, "On")
 }
 
 RegisterHotkeys()
 {
 	; Hotkeys fired only when Gothic is the active window
 	HotIfWinActive(g_sWindowTitle)
-	RegisterHotkey("*", g_sSteamOverlayKey, ToggleSteamOverlay)
+		RegisterHotkey("*", g_sSteamOverlayKey, ToggleSteamOverlay)
 	HotIfWinActive()
 
 	; Hotkeys fired only when Gothic is the active window and the Steam overlay is not in the foreground
 	HotIf((*) => WinActive(g_sWindowTitle) && !ToggleStates.bSteamOverlay)
-	RegisterHotkey("*~", g_sFastAttackKey, HoldFastAttack)
-	RegisterHotkey("*~", g_sForwardKey, Forward)
-	RegisterHotkey("*~", g_sJumpKey, Jump)
-	RegisterHotkey("*~", g_sToggleAutobuyKey, ToggleAutobuy, " up")
-	RegisterHotkey("*~", g_sToggleAutocookKey, ToggleAutocook, " up")
-	RegisterHotkey("*~", g_sToggleAutojumpKey, ToggleAutojump, " up")
-	RegisterHotkey("*~", g_sToggleAutorunKey, ToggleAutorun, " up")
-	RegisterHotkey("*~", g_sToggleWalkKey, ToggleWalk, " up")
+		RegisterHotkey("*~", g_sFastAttackKey, HoldFastAttack)
+		RegisterHotkey("*~", g_sForwardKey, OnForwardPress)
+		RegisterHotkey("*~", g_sJumpKey, OnJumpPress)
+		RegisterHotkey("*~", g_sToggleAutobuyKey, ToggleAutobuy, " up")
+		RegisterHotkey("*~", g_sToggleAutocookKey, ToggleAutocook, " up")
+		RegisterHotkey("*~", g_sToggleAutojumpKey, ToggleAutojump, " up")
+		RegisterHotkey("*~", g_sToggleAutorunKey, ToggleAutorun, " up")
+		RegisterHotkey("*~", g_sToggleWalkKey, ToggleWalk, " up")
 	HotIf()
 }
 
@@ -231,10 +229,10 @@ ToggleWalk(p_sThisHotkey)
 	Send("{" l_sCleanHotkey (ToggleStates.bWalk ? " down}" : " up}"))
 }
 
-; Turn off autobuy
 *~LButton::
 *~Shift::
 {
+	; Turn off autobuy
 	if (ToggleStates.bAutobuy)
 	{
 		ToggleStates.bAutobuy := 0
