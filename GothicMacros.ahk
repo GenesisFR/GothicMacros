@@ -181,6 +181,7 @@ SendLeftMouseButton()
 ToggleAutobuy(*)
 {
 	Send("{Shift " ((ToggleStates.bAutobuy ^= 1) ? "down}" : "up}"))
+	Send("{" g_sActionKey (ToggleStates.bAutobuy ? " down}" : " up}"))
 
 	; Spam left-click to buy/sell/use items faster
 	SetTimer(SendLeftMouseButton, ToggleStates.bAutobuy * g_iAutobuyClickFrequency)
@@ -229,7 +230,7 @@ ToggleWalk(p_sThisHotkey)
 	if (ToggleStates.bAutobuy)
 	{
 		SetTimer(SendLeftMouseButton, ToggleStates.bAutobuy := 0)
-		Send("{Shift up}{LButton up}")
+		Send("{" g_sActionKey " up}{Shift up}{LButton up}")
 	}
 }
 
