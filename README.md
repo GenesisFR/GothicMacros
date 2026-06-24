@@ -3,7 +3,7 @@ An AutoHotkey 2 script that brings quality-of-life features to the classic versi
 
 ## Installation
 
-You can run the script from anywhere at any time, as long as `GothicMacros.ini` is in the same directory.
+You can run the script anywhere at any time, as long as `GothicMacros.ini` is in the same directory.
 
 All keys are configurable in the config file. Setting the optional keys to blank disables them.
 
@@ -26,8 +26,8 @@ If the game is run as admin, you must also run the script as admin for hotkeys t
 
 `F1`: toggle autorun  
 `F2`: toggle autojump  
-`l`: toggle autocook  
 `k`: toggle autobuy  
+`l`: toggle autocook  
 `ScrollLock`: toggle Steam overlay  
 `Shift`: toggle walk  
 `Middle-click`: fast attack  
@@ -41,15 +41,19 @@ If the game is run as admin, you must also run the script as admin for hotkeys t
 
 ## Useful in-game hotkeys
 
-`Caps Lock`: walk toggle  
+`Caps Lock`: toggle walk  
 `Ctrl + Alt + F8`: unstick your character  
 `Shift + Escape`: force open the menu
 
 ## Limitations
 
 - Hotkeys using modifiers (ex: `Ctrl + K`) may not work.
-- The Steam overlay must not be visible before running the script otherwise its internal state in the script will be desynced and hotkeys won't work when it's hidden.
 - The autobuy macro doesn't work without `Gothic2_Control=1` in `SystemPack.ini`.
+- The Steam overlay must not be visible before running the script otherwise its internal state in the script will be desynced and hotkeys won't work when it's hidden.
+
+## Credits
+
+[xxx_420_blaze_it_69_xxx](https://www.twitch.tv/xxx_420_blaze_it_69_xxx): info about useful in-game hotkeys
 
 ## Disclaimer
 
