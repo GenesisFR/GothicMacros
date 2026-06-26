@@ -121,6 +121,7 @@ ReadConfigFile()
 
 	; Optional Keys
 	g_sFastAttackKey     := IniRead(l_sConfigFile, "OptionalKeys", "sFastAttackKey", "")
+	g_sSmithKey          := IniRead(l_sConfigFile, "OptionalKeys", "sSmithKey", "")
 	g_sToggleAutobuyKey  := IniRead(l_sConfigFile, "OptionalKeys", "sToggleAutobuyKey", "")
 	g_sToggleAutocookKey := IniRead(l_sConfigFile, "OptionalKeys", "sToggleAutocookKey", "")
 	g_sToggleAutojumpKey := IniRead(l_sConfigFile, "OptionalKeys", "sToggleAutojumpKey", "")
@@ -188,6 +189,11 @@ ReleaseFastAttack(*)
 ReleaseSmith(*)
 {
 	SetTimer(SendBackward, HoldStates.bSmithing := 0)
+}
+
+SendBackward()
+{
+	SendKey(g_sBackwardKey)
 }
 
 SendJump()
