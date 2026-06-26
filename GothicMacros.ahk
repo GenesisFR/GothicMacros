@@ -13,6 +13,7 @@ class ToggleStates
 	static bAutocook     := 0
 	static bAutojump     := 0
 	static bAutorun      := 0
+	static bAutoswim     := 0
 	static bSteamOverlay := 0
 	static bWalk         := 0
 }
@@ -101,6 +102,12 @@ OnManualJumpPress(*)
 	SetTimer(SendJump, ToggleStates.bAutojump := 0)
 }
 
+OnQuickLoadPress(*)
+{
+	ReleaseAllKeys()
+	KeyWait(g_sQuickLoadKey)
+}
+
 ReadConfigFile()
 {
 	global
@@ -121,12 +128,14 @@ ReadConfigFile()
 
 	; Optional Keys
 	g_sFastAttackKey     := IniRead(l_sConfigFile, "OptionalKeys", "sFastAttackKey", "")
+	g_sQuickLoadKey      := IniRead(l_sConfigFile, "OptionalKeys", "sQuickLoadKey", "")
 	g_sRightClickKey     := IniRead(l_sConfigFile, "OptionalKeys", "sRightClickKey", "")
 	g_sSmithKey          := IniRead(l_sConfigFile, "OptionalKeys", "sSmithKey", "")
 	g_sToggleAutobuyKey  := IniRead(l_sConfigFile, "OptionalKeys", "sToggleAutobuyKey", "")
 	g_sToggleAutocookKey := IniRead(l_sConfigFile, "OptionalKeys", "sToggleAutocookKey", "")
 	g_sToggleAutojumpKey := IniRead(l_sConfigFile, "OptionalKeys", "sToggleAutojumpKey", "")
 	g_sToggleAutorunKey  := IniRead(l_sConfigFile, "OptionalKeys", "sToggleAutorunKey", "")
+	g_sToggleAutoswimKey := IniRead(l_sConfigFile, "OptionalKeys", "sToggleAutoswimKey", "")
 	g_sToggleWalkKey     := IniRead(l_sConfigFile, "OptionalKeys", "sToggleWalkKey", "")
 
 	; Prevent some variables from being negative or set to 0, otherwise timers won't work
@@ -157,12 +166,14 @@ RegisterHotkeys()
 	HotIf((*) => WinActive(g_sWindowTitle) && !ToggleStates.bSteamOverlay)
 		RegisterHotkey("*~", g_sForwardKey, OnManualForwardPress)
 		RegisterHotkey("*~", g_sJumpKey, OnManualJumpPress)
+		RegisterHotkey("*~", g_sQuickLoadKey, OnQuickLoadPress)
 		RegisterHotkey("*~", g_sFastAttackKey, ReleaseFastAttack, " up")
 		RegisterHotkey("*~", g_sSmithKey, ReleaseSmith, " up")
 		RegisterHotkey("*~", g_sToggleAutobuyKey, ToggleAutobuy, " up")
 		RegisterHotkey("*~", g_sToggleAutocookKey, ToggleAutocook, " up")
 		RegisterHotkey("*~", g_sToggleAutojumpKey, ToggleAutojump, " up")
 		RegisterHotkey("*~", g_sToggleAutorunKey, ToggleAutorun, " up")
+		RegisterHotkey("*~", g_sToggleAutoswimKey, ToggleAutoswim, " up")
 		RegisterHotkey("*~", g_sToggleWalkKey, ToggleWalk, " up")
 	HotIf()
 }
@@ -178,7 +189,7 @@ ReleaseAllKeys()
 
 	; Reset states
 	HoldStates.bFastAttacking := HoldStates.bSmithing := 0
-	ToggleStates.bAutobuy := ToggleStates.bAutocook := ToggleStates.bAutojump := ToggleStates.bAutorun := ToggleStates.bWalk := 0
+	ToggleStates.bAutobuy := ToggleStates.bAutocook := ToggleStates.bAutojump := ToggleStates.bAutorun := ToggleStates.bAutoswim := ToggleStates.bWalk := 0
 }
 
 ReleaseFastAttack(*)
@@ -240,6 +251,11 @@ ToggleAutojump(*)
 ToggleAutorun(*)
 {
 	Send("{" g_sForwardKey ((ToggleStates.bAutorun ^= 1) ? " down}" : " up}"))
+}
+
+ToggleAutoswim(*)
+{
+	Send("{" g_sJumpKey ((ToggleStates.bAutoswim ^= 1) ? " down}" : " up}"))
 }
 
 ToggleSteamOverlay(*)
