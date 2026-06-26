@@ -216,8 +216,7 @@ SendLeftMouseButton()
 ; Buy/Sell/Use in bulk (highlight the desired item beforehand)
 ToggleAutobuy(*)
 {
-	Send("{Shift " ((ToggleStates.bAutobuy ^= 1) ? "down}" : "up}"))
-	Send("{" g_sActionKey (ToggleStates.bAutobuy ? " down}" : " up}"))
+	Send((ToggleStates.bAutobuy ^= 1) ? "{Shift down}{" g_sActionKey " down}" : "{Shift up}{" g_sActionKey " up}")
 
 	; Spam left-click to buy/sell/use items faster
 	SetTimer(SendLeftMouseButton, ToggleStates.bAutobuy * g_iAutobuyClickFrequency)
@@ -242,20 +241,17 @@ ToggleAutorun(*)
 	Send("{" g_sForwardKey ((ToggleStates.bAutorun ^= 1) ? " down}" : " up}"))
 }
 
-ToggleSteamOverlay(p_sThisHotkey)
+ToggleSteamOverlay(*)
 {
 	ToggleStates.bSteamOverlay ^= 1
 	ReleaseAllKeys()
-
-	l_sCleanHotkey := CleanHotkey(p_sThisHotkey)
-	Send("{" l_sCleanHotkey "}")
-	KeyWait(l_sCleanHotkey)
+	SendKey(g_sSteamOverlayKey)
+	KeyWait(g_sSteamOverlayKey)
 }
 
-ToggleWalk(p_sThisHotkey)
+ToggleWalk(*)
 {
-	l_sCleanHotkey := CleanHotkey(p_sThisHotkey)
-	Send("{" l_sCleanHotkey ((ToggleStates.bWalk ^= 1) ? " down}" : " up}"))
+	Send("{" g_sToggleWalkKey ((ToggleStates.bWalk ^= 1) ? " down}" : " up}"))
 }
 
 *~Escape::
@@ -264,10 +260,7 @@ ToggleWalk(p_sThisHotkey)
 *~Shift::
 {
 	if (ToggleStates.bAutobuy)
-	{
-		SetTimer(SendLeftMouseButton, ToggleStates.bAutobuy := 0)
-		Send("{" g_sActionKey " up}{Shift up}{LButton up}")
-	}
+		ToggleAutobuy()
 }
 
 #SuspendExempt
