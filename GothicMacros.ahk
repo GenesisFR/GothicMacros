@@ -121,6 +121,7 @@ ReadConfigFile()
 
 	; Optional Keys
 	g_sFastAttackKey     := IniRead(l_sConfigFile, "OptionalKeys", "sFastAttackKey", "")
+	g_sRightClickKey     := IniRead(l_sConfigFile, "OptionalKeys", "sRightClickKey", "")
 	g_sSmithKey          := IniRead(l_sConfigFile, "OptionalKeys", "sSmithKey", "")
 	g_sToggleAutobuyKey  := IniRead(l_sConfigFile, "OptionalKeys", "sToggleAutobuyKey", "")
 	g_sToggleAutocookKey := IniRead(l_sConfigFile, "OptionalKeys", "sToggleAutocookKey", "")
@@ -253,6 +254,17 @@ ToggleWalk(*)
 {
 	Send("{" g_sToggleWalkKey ((ToggleStates.bWalk ^= 1) ? " down}" : " up}"))
 }
+
+#HotIf WinActive(g_sWindowTitle) && g_sRightClickKey && !ToggleStates.bSteamOverlay
+*RButton::
+{
+	if (ToggleStates.bAutobuy)
+		ToggleAutobuy()
+
+	Send("{" g_sRightClickKey " down}")
+}
+*RButton up::Send("{" g_sRightClickKey " up}")
+#HotIf
 
 *~Escape::
 *~LButton::
