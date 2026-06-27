@@ -282,7 +282,7 @@ ToggleWalk(*)
 *RButton up::Send("{" g_sRightClickKey " up}")
 #HotIf
 
-*~Escape::
+*~Escape::ReleaseAllKeys()
 *~LButton::
 *~RButton::
 *~Shift::
