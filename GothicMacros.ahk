@@ -40,7 +40,7 @@ Init()
 			"Int", 0,
 			"Int", 0)
 
-	OnExit((*) => ReleaseAllKeys())
+	OnExit((*) => ResetAll())
 }
 
 CleanHotkey(p_sHotkey)
@@ -85,7 +85,7 @@ OnFocusChanged(*)
 	if WinActive(g_sWindowTitle)
 	{
 		WinWaitNotActive(g_sWindowTitle)
-		ReleaseAllKeys()
+		ResetAll()
 	}
 }
 
@@ -102,7 +102,7 @@ OnJumpPress(*)
 
 OnQuickLoadPress(*)
 {
-	ReleaseAllKeys()
+	ResetAll()
 	KeyWait(g_sQuickLoadKey)
 }
 
@@ -129,6 +129,8 @@ ReadConfigFile()
 	g_bBeepOnSuspend := IniRead(l_sConfigFile, "General", "bBeepOnSuspend", true) == true
 	if !IsInteger(g_iAutobuyClickFrequency := IniRead(l_sConfigFile, "General", "iAutobuyClickFrequency", 100))
 		g_iAutobuyClickFrequency := 100
+	if !IsInteger(g_iAutojumpFrequency := IniRead(l_sConfigFile, "General", "iAutojumpFrequency", 500))
+		g_iAutojumpFrequency := 500
 
 	; Mandatory Keys
 	g_sActionKey         := IniRead(l_sConfigFile, "MandatoryKeys", "sActionKey", "f")
@@ -151,6 +153,7 @@ ReadConfigFile()
 
 	; Prevent some variables from being negative or set to 0, otherwise timers won't work
 	g_iAutobuyClickFrequency := Max(g_iAutobuyClickFrequency, 1)
+	g_iAutojumpFrequency     := Max(g_iAutojumpFrequency, 1)
 }
 
 RegisterHotkey(p_sPrefix, p_sHotkey, p_fnAction, p_sSuffix := "")
@@ -189,7 +192,7 @@ RegisterHotkeys()
 	HotIf()
 }
 
-ReleaseAllKeys()
+ResetAll()
 {
 	; Delete timers
 	for l_fnTimer in [Cook, SendBackward, SendJump, SendLeftMouseButton]
@@ -242,17 +245,20 @@ ToggleAutocook(*)
 
 ToggleAutojump(*)
 {
-	Send("{" g_sJumpKey ((ToggleStates.bAutojump ^= 1) ? "down}" : "up}"))
+	ToggleStates.bAutojump ^= 1
+	SendJump()
 
 	; Continuously spam jump, should be combined with autorun
-	SetTimer(SendJump, ToggleStates.bAutojump * 500)
+	SetTimer(SendJump, ToggleStates.bAutojump * g_iAutojumpFrequency)
 }
 
+; Autorun (shouldn't be used underwater)
 ToggleAutorun(*)
 {
 	Send("{" g_sForwardKey ((ToggleStates.bAutorun ^= 1) ? " down}" : " up}"))
 }
 
+; Autoswim (should only be used underwater)
 ToggleAutoswim(*)
 {
 	Send("{" g_sJumpKey ((ToggleStates.bAutoswim ^= 1) ? " down}" : " up}"))
@@ -261,7 +267,7 @@ ToggleAutoswim(*)
 ToggleSteamOverlay(*)
 {
 	ToggleStates.bSteamOverlay ^= 1
-	ReleaseAllKeys()
+	ResetAll()
 	SendKey(g_sSteamOverlayKey)
 	KeyWait(g_sSteamOverlayKey)
 }
@@ -282,7 +288,7 @@ ToggleWalk(*)
 *RButton up::Send("{" g_sRightClickKey " up}")
 #HotIf
 
-*~Escape::ReleaseAllKeys()
+*~Escape::ResetAll()
 *~LButton::
 *~RButton::
 *~Shift::
@@ -308,7 +314,7 @@ ToggleWalk(*)
 		SoundBeep(1000, 100)
 
 	if (A_IsSuspended)
-		ReleaseAllKeys()
+		ResetAll()
 	; Double beep when resumed
 	else
 	{
