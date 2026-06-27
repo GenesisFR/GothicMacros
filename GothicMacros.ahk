@@ -67,19 +67,17 @@ Cook(p_iStep := 1)
 	}
 }
 
-; Tap the Action key then spam Backward until the Smithing key is released
-HoldSmith(*)
-{
-	HoldStates.bSmithing := 1
-	SendKey(g_sActionKey)
-	SetTimer(SendBackward, 200)
-}
-
 ; Continously fast attack, use it preferably on enemies you can't parry (you must have your weapon pulled out beforehand)
-HoldFastAttack(*)
+OnFastAttackPress(*)
 {
 	HoldStates.bFastAttacking := 1
 	Send("{" g_sActionKey " down}{" g_sBackwardKey " down}{" g_sForwardKey " down}")
+}
+
+OnFastAttackRelease(*)
+{
+	HoldStates.bFastAttacking := 0
+	Send("{" g_sActionKey " up}{" g_sBackwardKey " up}{" g_sForwardKey " up}")
 }
 
 OnFocusChanged(*)
@@ -91,13 +89,13 @@ OnFocusChanged(*)
 	}
 }
 
-OnManualForwardPress(*)
+OnForwardPress(*)
 {
 	ToggleStates.bAutorun := 0
 }
 
 ; Turn off autojump
-OnManualJumpPress(*)
+OnJumpPress(*)
 {
 	SetTimer(SendJump, ToggleStates.bAutojump := 0)
 }
@@ -106,6 +104,19 @@ OnQuickLoadPress(*)
 {
 	ReleaseAllKeys()
 	KeyWait(g_sQuickLoadKey)
+}
+
+; Tap the Action key then spam Backward until the Smithing key is released
+OnSmithPress(*)
+{
+	HoldStates.bSmithing := 1
+	SendKey(g_sActionKey)
+	SetTimer(SendBackward, 200)
+}
+
+OnSmithRelease(*)
+{
+	SetTimer(SendBackward, HoldStates.bSmithing := 0)
 }
 
 ReadConfigFile()
@@ -158,17 +169,17 @@ RegisterHotkeys()
 
 	; Hotkeys fired only when Gothic is the active window, the key isn't being held and the Steam overlay is not in the foreground
 	HotIf((*) => WinActive(g_sWindowTitle) && !HoldStates.bFastAttacking && !ToggleStates.bSteamOverlay)
-		RegisterHotkey("*~", g_sFastAttackKey, HoldFastAttack)
+		RegisterHotkey("*~", g_sFastAttackKey, OnFastAttackPress)
 	HotIf((*) => WinActive(g_sWindowTitle) && !HoldStates.bSmithing && !ToggleStates.bSteamOverlay)
-		RegisterHotkey("*~", g_sSmithKey, HoldSmith)
+		RegisterHotkey("*~", g_sSmithKey, OnSmithPress)
 
 	; Hotkeys fired only when Gothic is the active window and the Steam overlay is not in the foreground
 	HotIf((*) => WinActive(g_sWindowTitle) && !ToggleStates.bSteamOverlay)
-		RegisterHotkey("*~", g_sForwardKey, OnManualForwardPress)
-		RegisterHotkey("*~", g_sJumpKey, OnManualJumpPress)
+		RegisterHotkey("*~", g_sForwardKey, OnForwardPress)
+		RegisterHotkey("*~", g_sJumpKey, OnJumpPress)
 		RegisterHotkey("*~", g_sQuickLoadKey, OnQuickLoadPress)
-		RegisterHotkey("*~", g_sFastAttackKey, ReleaseFastAttack, " up")
-		RegisterHotkey("*~", g_sSmithKey, ReleaseSmith, " up")
+		RegisterHotkey("*~", g_sFastAttackKey, OnFastAttackRelease, " up")
+		RegisterHotkey("*~", g_sSmithKey, OnSmithRelease, " up")
 		RegisterHotkey("*~", g_sToggleAutobuyKey, ToggleAutobuy, " up")
 		RegisterHotkey("*~", g_sToggleAutocookKey, ToggleAutocook, " up")
 		RegisterHotkey("*~", g_sToggleAutojumpKey, ToggleAutojump, " up")
@@ -181,8 +192,8 @@ RegisterHotkeys()
 ReleaseAllKeys()
 {
 	; Delete timers
-	for fn in [Cook, SendBackward, SendJump, SendLeftMouseButton]
-		SetTimer(fn, 0)
+	for l_fnTimer in [Cook, SendBackward, SendJump, SendLeftMouseButton]
+		SetTimer(l_fnTimer, 0)
 
 	; Release keys
 	Send("{" g_sActionKey " up}{" g_sBackwardKey " up}{" g_sFastAttackKey " up}{" g_sForwardKey " up}{" g_sJumpKey " up}{LButton up}{Shift up}")
@@ -190,17 +201,6 @@ ReleaseAllKeys()
 	; Reset states
 	HoldStates.bFastAttacking := HoldStates.bSmithing := 0
 	ToggleStates.bAutobuy := ToggleStates.bAutocook := ToggleStates.bAutojump := ToggleStates.bAutorun := ToggleStates.bAutoswim := ToggleStates.bWalk := 0
-}
-
-ReleaseFastAttack(*)
-{
-	HoldStates.bFastAttacking := 0
-	Send("{" g_sActionKey " up}{" g_sBackwardKey " up}{" g_sForwardKey " up}")
-}
-
-ReleaseSmith(*)
-{
-	SetTimer(SendBackward, HoldStates.bSmithing := 0)
 }
 
 SendBackward()
