@@ -9,13 +9,14 @@ class HoldStates
 
 class ToggleStates
 {
-	static bAutobuy      := 0
-	static bAutocook     := 0
-	static bAutojump     := 0
-	static bAutorun      := 0
-	static bAutoswim     := 0
-	static bSteamOverlay := 0
-	static bWalk         := 0
+	static bAutobuy         := 0
+	static bAutocook        := 0
+	static bAutojump        := 0
+	static bAutorun         := 0
+	static bAutoswim        := 0
+	static bFirstPersonMode := 0
+	static bSteamOverlay    := 0
+	static bWalk            := 0
 }
 
 Init()
@@ -140,16 +141,17 @@ ReadConfigFile()
 	g_sSteamOverlayKey   := IniRead(l_sConfigFile, "MandatoryKeys", "sSteamOverlayKey", "ScrollLock")
 
 	; Optional Keys
-	g_sFastAttackKey     := IniRead(l_sConfigFile, "OptionalKeys", "sFastAttackKey", "")
-	g_sQuickLoadKey      := IniRead(l_sConfigFile, "OptionalKeys", "sQuickLoadKey", "")
-	g_sRightClickKey     := IniRead(l_sConfigFile, "OptionalKeys", "sRightClickKey", "")
-	g_sSmithKey          := IniRead(l_sConfigFile, "OptionalKeys", "sSmithKey", "")
-	g_sToggleAutobuyKey  := IniRead(l_sConfigFile, "OptionalKeys", "sToggleAutobuyKey", "")
-	g_sToggleAutocookKey := IniRead(l_sConfigFile, "OptionalKeys", "sToggleAutocookKey", "")
-	g_sToggleAutojumpKey := IniRead(l_sConfigFile, "OptionalKeys", "sToggleAutojumpKey", "")
-	g_sToggleAutorunKey  := IniRead(l_sConfigFile, "OptionalKeys", "sToggleAutorunKey", "")
-	g_sToggleAutoswimKey := IniRead(l_sConfigFile, "OptionalKeys", "sToggleAutoswimKey", "")
-	g_sToggleWalkKey     := IniRead(l_sConfigFile, "OptionalKeys", "sToggleWalkKey", "")
+	g_sFastAttackKey            := IniRead(l_sConfigFile, "OptionalKeys", "sFastAttackKey", "")
+	g_sQuickLoadKey             := IniRead(l_sConfigFile, "OptionalKeys", "sQuickLoadKey", "")
+	g_sRightClickKey            := IniRead(l_sConfigFile, "OptionalKeys", "sRightClickKey", "")
+	g_sSmithKey                 := IniRead(l_sConfigFile, "OptionalKeys", "sSmithKey", "")
+	g_sToggleAutobuyKey         := IniRead(l_sConfigFile, "OptionalKeys", "sToggleAutobuyKey", "")
+	g_sToggleAutocookKey        := IniRead(l_sConfigFile, "OptionalKeys", "sToggleAutocookKey", "")
+	g_sToggleAutojumpKey        := IniRead(l_sConfigFile, "OptionalKeys", "sToggleAutojumpKey", "")
+	g_sToggleAutorunKey         := IniRead(l_sConfigFile, "OptionalKeys", "sToggleAutorunKey", "")
+	g_sToggleAutoswimKey        := IniRead(l_sConfigFile, "OptionalKeys", "sToggleAutoswimKey", "")
+	g_sToggleFirstPersonModeKey := IniRead(l_sConfigFile, "OptionalKeys", "sToggleFirstPersonModeKey", "")
+	g_sToggleWalkKey            := IniRead(l_sConfigFile, "OptionalKeys", "sToggleWalkKey", "")
 
 	; Prevent some variables from being negative or set to 0, otherwise timers won't work
 	g_iAutobuyClickFrequency := Max(g_iAutobuyClickFrequency, 1)
@@ -188,6 +190,7 @@ RegisterHotkeys()
 		RegisterHotkey("*~", g_sToggleAutojumpKey, ToggleAutojump, " up")
 		RegisterHotkey("*~", g_sToggleAutorunKey, ToggleAutorun, " up")
 		RegisterHotkey("*~", g_sToggleAutoswimKey, ToggleAutoswim, " up")
+		RegisterHotkey("*~", g_sToggleFirstPersonModeKey, ToggleFirstPersonMode, " up")
 		RegisterHotkey("*~", g_sToggleWalkKey, ToggleWalk, " up")
 	HotIf()
 }
@@ -203,7 +206,7 @@ ResetAll()
 
 	; Reset states
 	HoldStates.bFastAttacking := HoldStates.bSmithing := 0
-	ToggleStates.bAutobuy := ToggleStates.bAutocook := ToggleStates.bAutojump := ToggleStates.bAutorun := ToggleStates.bAutoswim := ToggleStates.bWalk := 0
+	ToggleStates.bAutobuy := ToggleStates.bAutocook := ToggleStates.bAutojump := ToggleStates.bAutorun := ToggleStates.bAutoswim := ToggleStates.bFirstPersonMode := ToggleStates.bWalk := 0
 }
 
 SendBackward()
@@ -243,6 +246,7 @@ ToggleAutocook(*)
 	Cook(ToggleStates.bAutocook ^= 1)
 }
 
+; Autojump (works best on flat ground and upward slopes)
 ToggleAutojump(*)
 {
 	ToggleStates.bAutojump ^= 1
@@ -262,6 +266,11 @@ ToggleAutorun(*)
 ToggleAutoswim(*)
 {
 	Send("{" g_sJumpKey ((ToggleStates.bAutoswim ^= 1) ? " down}" : " up}"))
+}
+
+ToggleFirstPersonMode(*)
+{
+	Send("{" g_sToggleFirstPersonModeKey ((ToggleStates.bFirstPersonMode ^= 1) ? " down}" : " up}"))
 }
 
 ToggleSteamOverlay(*)
