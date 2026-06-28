@@ -98,6 +98,7 @@ OnForwardPress(*)
 ; Turn off autojump
 OnJumpPress(*)
 {
+	ToggleStates.bAutoswim := 0
 	SetTimer(SendJump, ToggleStates.bAutojump := 0)
 }
 
