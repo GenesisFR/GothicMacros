@@ -4,6 +4,7 @@
 class HoldStates
 {
 	static bFastAttacking := 0
+	static bLooting       := 0
 	static bSmithing      := 0
 	static bWalking       := 0
 }
@@ -103,6 +104,18 @@ OnJumpPress(*)
 	SetTimer(SendJump, ToggleStates.bAutojump := 0)
 }
 
+OnLootPress(*)
+{
+	HoldStates.bLooting := 1
+	SendKey(g_sActionKey)
+	SetTimer(SendAction, 200)
+}
+
+OnLootRelease(*)
+{
+	SetTimer(SendAction, HoldStates.bLooting := 0)
+}
+
 OnQuickLoadPress(*)
 {
 	ResetAll()
@@ -157,6 +170,7 @@ ReadConfigFile()
 
 	; Optional Keys
 	g_sFastAttackKey            := IniRead(l_sConfigFile, "OptionalKeys", "sFastAttackKey", "")
+	g_sLootKey                  := IniRead(l_sConfigFile, "OptionalKeys", "sLootKey", "")
 	g_sQuickLoadKey             := IniRead(l_sConfigFile, "OptionalKeys", "sQuickLoadKey", "")
 	g_sRightClickKey            := IniRead(l_sConfigFile, "OptionalKeys", "sRightClickKey", "")
 	g_sSmithKey                 := IniRead(l_sConfigFile, "OptionalKeys", "sSmithKey", "")
@@ -190,6 +204,8 @@ RegisterHotkeys()
 	; Hotkeys fired only when Gothic is the active window, the key isn't being held and the Steam overlay is not in the foreground
 	HotIf((*) => WinActive(g_sWindowTitle) && !HoldStates.bFastAttacking && !ToggleStates.bSteamOverlay)
 		RegisterHotkey("*~", g_sFastAttackKey, OnFastAttackPress)
+	HotIf((*) => WinActive(g_sWindowTitle) && !HoldStates.bLooting && !ToggleStates.bSteamOverlay)
+		RegisterHotkey("*~", g_sLootKey, OnLootPress)
 	HotIf((*) => WinActive(g_sWindowTitle) && !HoldStates.bSmithing && !ToggleStates.bSteamOverlay)
 		RegisterHotkey("*~", g_sSmithKey, OnSmithPress)
 	HotIf((*) => WinActive(g_sWindowTitle) && !HoldStates.bWalking && !ToggleStates.bSteamOverlay)
@@ -201,6 +217,7 @@ RegisterHotkeys()
 		RegisterHotkey("*~", g_sJumpKey, OnJumpPress)
 		RegisterHotkey("*~", g_sQuickLoadKey, OnQuickLoadPress)
 		RegisterHotkey("*~", g_sFastAttackKey, OnFastAttackRelease, " up")
+		RegisterHotkey("*~", g_sLootKey, OnLootRelease, " up")
 		RegisterHotkey("*~", g_sSmithKey, OnSmithRelease, " up")
 		RegisterHotkey("*",  g_sToggleWalkKey, OnWalkRelease, " up")
 		RegisterHotkey("*~", g_sToggleAutobuyKey, ToggleAutobuy, " up")
@@ -215,11 +232,11 @@ RegisterHotkeys()
 ResetAll(p_bToggleOffCapsLock := true)
 {
 	; Delete timers
-	for l_fnTimer in [Cook, SendBackward, SendJump, SendLeftMouseButton]
+	for l_fnTimer in [Cook, SendAction, SendBackward, SendJump, SendLeftMouseButton]
 		SetTimer(l_fnTimer, 0)
 
 	; Release keys
-	for l_sKey in ["LButton","Shift", g_sActionKey, g_sBackwardKey, g_sFastAttackKey, g_sForwardKey, g_sJumpKey]
+	for l_sKey in ["LButton", "Shift", g_sActionKey, g_sBackwardKey, g_sFastAttackKey, g_sForwardKey, g_sJumpKey]
 		Send("{Blind}{" l_sKey " up}")
 
 	; Reset states
@@ -228,6 +245,11 @@ ResetAll(p_bToggleOffCapsLock := true)
 
 	if (p_bToggleOffCapsLock)
 		SetCapsLockState(ToggleStates.bWalk := 0)
+}
+
+SendAction()
+{
+	SendKey(g_sActionKey)
 }
 
 SendBackward()
