@@ -347,6 +347,7 @@ ToggleSteamOverlay(*)
 *RButton up::Send("{" g_sRightClickKey " up}")
 #HotIf
 
+#HotIf WinActive(g_sWindowTitle) && !ToggleStates.bSteamOverlay
 *~Escape::ResetAll(false)
 *~LButton::
 *~RButton::
@@ -354,6 +355,7 @@ ToggleSteamOverlay(*)
 	if (ToggleStates.bAutobuy)
 		ToggleAutobuy()
 }
+#HotIf
 
 #SuspendExempt
 ; Exit script
