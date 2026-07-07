@@ -358,14 +358,14 @@ ToggleSteamOverlay(*)
 #HotIf
 
 #SuspendExempt
-; Exit script
-*~!F10::ExitApp() ; ALT+F10
+; Exit script (CTRL + ALT + F10)
+*~^!F10::ExitApp()
 
-; Reload script
-*~!F11::Reload() ; ALT+F11
+; Reload script (CTRL + ALT + F11)
+*~^!F11::Reload()
 
-; Suspend script (useful in menus)
-*~!F12:: ; ALT+F12
+; Suspend script (CTRL + ALT + F12, useful in menus)
+*~^!F12::
 {
 	Suspend()
 
