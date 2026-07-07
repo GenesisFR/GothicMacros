@@ -3,8 +3,9 @@
 
 class HoldStates
 {
-	static bSmithing      := 0
 	static bFastAttacking := 0
+	static bSmithing      := 0
+	static bWalking       := 0
 }
 
 class ToggleStates
@@ -121,6 +122,19 @@ OnSmithRelease(*)
 	SetTimer(SendBackward, HoldStates.bSmithing := 0)
 }
 
+OnWalkPress(*)
+{
+	HoldStates.bWalking := 1
+	Send("{Blind}{" g_sToggleWalkKey " down}")
+}
+
+OnWalkRelease(*)
+{
+	HoldStates.bWalking := 0
+	Send("{Blind}{" g_sToggleWalkKey " up}")
+	SetCapsLockState(ToggleStates.bWalk ^= 1)
+}
+
 ReadConfigFile()
 {
 	global
@@ -135,11 +149,11 @@ ReadConfigFile()
 		g_iAutojumpFrequency := 500
 
 	; Mandatory Keys
-	g_sActionKey         := IniRead(l_sConfigFile, "MandatoryKeys", "sActionKey", "f")
-	g_sBackwardKey       := IniRead(l_sConfigFile, "MandatoryKeys", "sBackwardKey", "s")
-	g_sForwardKey        := IniRead(l_sConfigFile, "MandatoryKeys", "sForwardKey", "w")
-	g_sJumpKey           := IniRead(l_sConfigFile, "MandatoryKeys", "sJumpKey", "Space")
-	g_sSteamOverlayKey   := IniRead(l_sConfigFile, "MandatoryKeys", "sSteamOverlayKey", "ScrollLock")
+	g_sActionKey       := IniRead(l_sConfigFile, "MandatoryKeys", "sActionKey", "f")
+	g_sBackwardKey     := IniRead(l_sConfigFile, "MandatoryKeys", "sBackwardKey", "s")
+	g_sForwardKey      := IniRead(l_sConfigFile, "MandatoryKeys", "sForwardKey", "w")
+	g_sJumpKey         := IniRead(l_sConfigFile, "MandatoryKeys", "sJumpKey", "Space")
+	g_sSteamOverlayKey := IniRead(l_sConfigFile, "MandatoryKeys", "sSteamOverlayKey", "ScrollLock")
 
 	; Optional Keys
 	g_sFastAttackKey            := IniRead(l_sConfigFile, "OptionalKeys", "sFastAttackKey", "")
@@ -178,6 +192,8 @@ RegisterHotkeys()
 		RegisterHotkey("*~", g_sFastAttackKey, OnFastAttackPress)
 	HotIf((*) => WinActive(g_sWindowTitle) && !HoldStates.bSmithing && !ToggleStates.bSteamOverlay)
 		RegisterHotkey("*~", g_sSmithKey, OnSmithPress)
+	HotIf((*) => WinActive(g_sWindowTitle) && !HoldStates.bWalking && !ToggleStates.bSteamOverlay)
+		RegisterHotkey("*", g_sToggleWalkKey, OnWalkPress)
 
 	; Hotkeys fired only when Gothic is the active window and the Steam overlay is not in the foreground
 	HotIf((*) => WinActive(g_sWindowTitle) && !ToggleStates.bSteamOverlay)
@@ -186,28 +202,32 @@ RegisterHotkeys()
 		RegisterHotkey("*~", g_sQuickLoadKey, OnQuickLoadPress)
 		RegisterHotkey("*~", g_sFastAttackKey, OnFastAttackRelease, " up")
 		RegisterHotkey("*~", g_sSmithKey, OnSmithRelease, " up")
+		RegisterHotkey("*",  g_sToggleWalkKey, OnWalkRelease, " up")
 		RegisterHotkey("*~", g_sToggleAutobuyKey, ToggleAutobuy, " up")
 		RegisterHotkey("*~", g_sToggleAutocookKey, ToggleAutocook, " up")
 		RegisterHotkey("*~", g_sToggleAutojumpKey, ToggleAutojump, " up")
 		RegisterHotkey("*~", g_sToggleAutorunKey, ToggleAutorun, " up")
 		RegisterHotkey("*~", g_sToggleAutoswimKey, ToggleAutoswim, " up")
 		RegisterHotkey("*~", g_sToggleFirstPersonModeKey, ToggleFirstPersonMode, " up")
-		RegisterHotkey("*~", g_sToggleWalkKey, ToggleWalk, " up")
 	HotIf()
 }
 
-ResetAll()
+ResetAll(p_bToggleOffCapsLock := true)
 {
 	; Delete timers
 	for l_fnTimer in [Cook, SendBackward, SendJump, SendLeftMouseButton]
 		SetTimer(l_fnTimer, 0)
 
 	; Release keys
-	Send("{" g_sActionKey " up}{" g_sBackwardKey " up}{" g_sFastAttackKey " up}{" g_sForwardKey " up}{" g_sJumpKey " up}{LButton up}{Shift up}")
+	for l_sKey in ["LButton","Shift", g_sActionKey, g_sBackwardKey, g_sFastAttackKey, g_sForwardKey, g_sJumpKey]
+		Send("{Blind}{" l_sKey " up}")
 
 	; Reset states
-	HoldStates.bFastAttacking := HoldStates.bSmithing := 0
-	ToggleStates.bAutobuy := ToggleStates.bAutocook := ToggleStates.bAutojump := ToggleStates.bAutorun := ToggleStates.bAutoswim := ToggleStates.bFirstPersonMode := ToggleStates.bWalk := 0
+	HoldStates.bFastAttacking := HoldStates.bSmithing := HoldStates.bWalking := 0
+	ToggleStates.bAutobuy := ToggleStates.bAutocook := ToggleStates.bAutojump := ToggleStates.bAutorun := ToggleStates.bAutoswim := ToggleStates.bFirstPersonMode := 0
+
+	if (p_bToggleOffCapsLock)
+		SetCapsLockState(ToggleStates.bWalk := 0)
 }
 
 SendBackward()
@@ -222,9 +242,9 @@ SendJump()
 
 SendKey(p_sKey)
 {
-	Send("{" p_sKey " down}")
+	Send("{Blind}{" p_sKey " down}")
 	Sleep(25)
-	Send("{" p_sKey " up}")
+	Send("{Blind}{" p_sKey " up}")
 }
 
 SendLeftMouseButton()
@@ -282,10 +302,17 @@ ToggleSteamOverlay(*)
 	KeyWait(g_sSteamOverlayKey)
 }
 
-ToggleWalk(*)
+#HotIf WinActive(g_sWindowTitle) && g_sToggleWalkKey && !ToggleStates.bSteamOverlay
+<+LButton::
 {
-	Send("{" g_sToggleWalkKey ((ToggleStates.bWalk ^= 1) ? " down}" : " up}"))
+	if (ToggleStates.bAutobuy)
+		ToggleAutobuy()
+
+	l_bPrevCapsLockState := GetKeyState("CapsLock", "T")
+	KeyWait("LShift")
+	SetCapsLockState(l_bPrevCapsLockState)
 }
+#HotIf
 
 #HotIf WinActive(g_sWindowTitle) && g_sRightClickKey && !ToggleStates.bSteamOverlay
 *RButton::
@@ -298,10 +325,9 @@ ToggleWalk(*)
 *RButton up::Send("{" g_sRightClickKey " up}")
 #HotIf
 
-*~Escape::ResetAll()
+*~Escape::ResetAll(false)
 *~LButton::
 *~RButton::
-*~Shift::
 {
 	if (ToggleStates.bAutobuy)
 		ToggleAutobuy()
