@@ -219,6 +219,7 @@ ReadConfigFile()
 	; General
 	g_bAutobuyStacks := IniRead(l_sConfigFile, "General", "bAutobuyStacks", false) == true
 	g_bBeepOnSuspend := IniRead(l_sConfigFile, "General", "bBeepOnSuspend", true) == true
+	g_bInvertControlsWhenAutoSwimming := IniRead(l_sConfigFile, "General", "bInvertControlsWhenAutoSwimming", false) == true
 	g_bWaitForSneakAnimation := IniRead(l_sConfigFile, "General", "bWaitForSneakAnimation", false) == true
 
 	if !IsInteger(g_iAutobuyClickFrequency := IniRead(l_sConfigFile, "General", "iAutobuyClickFrequency", 100))
@@ -270,6 +271,11 @@ RegisterHotkeys()
 	; Hotkeys fired only when Gothic is the active window, the key isn't being held and the Steam overlay is not in the foreground
 	HotIf((*) => WinActive(g_sWindowTitle) && !HoldStates.bFastAttacking && !ToggleStates.bSteamOverlay)
 		RegisterHotkey("*~", g_sFastAttackKey, OnFastAttackPress)
+	HotIf((*) => WinActive(g_sWindowTitle) && ToggleStates.bAutoswim && g_bInvertControlsWhenAutoSwimming && !ToggleStates.bSteamOverlay)
+		RegisterHotkey("*", g_sBackwardKey, (*) => Send("{" g_sForwardKey " down}"))
+		RegisterHotkey("*", g_sBackwardKey, (*) => Send("{" g_sForwardKey " up}"), " up")
+		RegisterHotkey("*", g_sForwardKey, (*) => Send("{" g_sBackwardKey " down}"))
+		RegisterHotkey("*", g_sForwardKey, (*) => Send("{" g_sBackwardKey " up}"), " up")
 	HotIf((*) => WinActive(g_sWindowTitle) && !HoldStates.bLooting && !ToggleStates.bSteamOverlay)
 		RegisterHotkey("*~", g_sLootKey, OnLootPress)
 	HotIf((*) => WinActive(g_sWindowTitle) && !HoldStates.bSmithing && !ToggleStates.bSteamOverlay)
