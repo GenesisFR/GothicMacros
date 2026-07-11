@@ -1,11 +1,25 @@
 #Requires AutoHotkey v2.0
 #SingleInstance
 
+class AnimationStates
+{
+	static SNEAK_ANIM_DURATION_IDLE := 500
+	static SNEAK_ANIM_DURATION_MOVING := 200
+	static iSneakTimePressed := 0
+
+	static GetSneakAnimDuration()
+	{
+		; The transition between standing up and sneaking is shorter when moving forward
+		return GetKeyState(g_sForwardKey) ? AnimationStates.SNEAK_ANIM_DURATION_MOVING : AnimationStates.SNEAK_ANIM_DURATION_IDLE
+	}
+}
+
 class HoldStates
 {
 	static bFastAttacking := 0
 	static bLooting       := 0
 	static bSmithing      := 0
+	static bSneaking      := 0
 	static bWalking       := 0
 }
 
@@ -135,6 +149,49 @@ OnSmithRelease(*)
 	SetTimer(SendBackward, HoldStates.bSmithing := 0)
 }
 
+OnSneakPress(*)
+{
+	Output(A_ThisFunc)
+	HoldStates.bSneaking := 1
+	AnimationStates.iSneakTimePressed := A_TickCount
+}
+
+OnSneakRelease(*)
+{
+	l_nTimeSinceSneakPress := A_TickCount - AnimationStates.iSneakTimePressed
+	Output(A_ThisFunc "::l_nTimeSinceSneakPress: " l_nTimeSinceSneakPress)
+
+	; If the key was held for longer than the minimum delay, toggle sneak off immediately, otherwise wait until the minimum delay has passed
+	if (l_nTimeSinceSneakPress > AnimationStates.GetSneakAnimDuration())
+		ToggleSneakOff()
+	else
+	{
+		Output(A_ThisFunc "::released too early!")
+
+		if (g_bWaitForSneakAnimation)
+		{
+			l_iSneakOffDelay := AnimationStates.GetSneakAnimDuration() - l_nTimeSinceSneakPress
+			Output(A_ThisFunc "::delaying sneak tap by " l_iSneakOffDelay "ms")
+			SetTimer(ToggleSneakOff, -l_iSneakOffDelay)
+		}
+	}
+
+	ToggleSneakOff()
+	{
+		Output(A_ThisFunc)
+		SendKey(g_sSneakKey)
+
+		; Wait until the animation is over before allowing the Sneak key to be pressed again
+		SetTimer(OnSneakOffAnimComplete, -AnimationStates.GetSneakAnimDuration())
+	}
+
+	OnSneakOffAnimComplete()
+	{
+		Output(A_ThisFunc)
+		HoldStates.bSneaking := 0
+	}
+}
+
 OnWalkPress(*)
 {
 	HoldStates.bWalking := 1
@@ -148,6 +205,11 @@ OnWalkRelease(*)
 	SetCapsLockState(ToggleStates.bWalk ^= 1)
 }
 
+Output(p_sMsg := "")
+{
+	OutputDebug(p_sMsg "`n")
+}
+
 ReadConfigFile()
 {
 	global
@@ -156,6 +218,8 @@ ReadConfigFile()
 
 	; General
 	g_bBeepOnSuspend := IniRead(l_sConfigFile, "General", "bBeepOnSuspend", true) == true
+	g_bWaitForSneakAnimation := IniRead(l_sConfigFile, "General", "bWaitForSneakAnimation", false) == true
+
 	if !IsInteger(g_iAutobuyClickFrequency := IniRead(l_sConfigFile, "General", "iAutobuyClickFrequency", 100))
 		g_iAutobuyClickFrequency := 100
 	if !IsInteger(g_iAutojumpFrequency := IniRead(l_sConfigFile, "General", "iAutojumpFrequency", 500))
@@ -174,6 +238,7 @@ ReadConfigFile()
 	g_sQuickLoadKey             := IniRead(l_sConfigFile, "OptionalKeys", "sQuickLoadKey", "")
 	g_sRightClickKey            := IniRead(l_sConfigFile, "OptionalKeys", "sRightClickKey", "")
 	g_sSmithKey                 := IniRead(l_sConfigFile, "OptionalKeys", "sSmithKey", "")
+	g_sSneakKey                 := IniRead(l_sConfigFile, "OptionalKeys", "sSneakKey", "")
 	g_sToggleAutobuyKey         := IniRead(l_sConfigFile, "OptionalKeys", "sToggleAutobuyKey", "")
 	g_sToggleAutocookKey        := IniRead(l_sConfigFile, "OptionalKeys", "sToggleAutocookKey", "")
 	g_sToggleAutojumpKey        := IniRead(l_sConfigFile, "OptionalKeys", "sToggleAutojumpKey", "")
@@ -208,6 +273,10 @@ RegisterHotkeys()
 		RegisterHotkey("*~", g_sLootKey, OnLootPress)
 	HotIf((*) => WinActive(g_sWindowTitle) && !HoldStates.bSmithing && !ToggleStates.bSteamOverlay)
 		RegisterHotkey("*~", g_sSmithKey, OnSmithPress)
+	HotIf((*) => WinActive(g_sWindowTitle) && !HoldStates.bSneaking && !ToggleStates.bSteamOverlay)
+		RegisterHotkey("*~", g_sSneakKey, OnSneakPress)
+	HotIf((*) => WinActive(g_sWindowTitle) && HoldStates.bSneaking && !ToggleStates.bSteamOverlay)
+		RegisterHotkey("*~", g_sSneakKey, OnSneakRelease, " up")
 	HotIf((*) => WinActive(g_sWindowTitle) && !HoldStates.bWalking && !ToggleStates.bSteamOverlay)
 		RegisterHotkey("*", g_sToggleWalkKey, OnWalkPress)
 
@@ -236,11 +305,12 @@ ResetAll(p_bToggleOffCapsLock := true)
 		SetTimer(l_fnTimer, 0)
 
 	; Release keys
-	for l_sKey in ["LButton", "Shift", g_sActionKey, g_sBackwardKey, g_sFastAttackKey, g_sForwardKey, g_sJumpKey]
+	for l_sKey in ["LAlt", "LButton", "LCtrl", "LShift", g_sActionKey, g_sBackwardKey, g_sFastAttackKey, g_sForwardKey, g_sJumpKey, g_sSneakKey]
 		Send("{Blind}{" l_sKey " up}")
 
 	; Reset states
-	HoldStates.bFastAttacking := HoldStates.bSmithing := HoldStates.bWalking := 0
+	AnimationStates.iSneakTimePressed := 0
+	HoldStates.bFastAttacking := HoldStates.bSmithing := HoldStates.bSneaking := HoldStates.bWalking := 0
 	ToggleStates.bAutobuy := ToggleStates.bAutocook := ToggleStates.bAutojump := ToggleStates.bAutorun := ToggleStates.bAutoswim := ToggleStates.bFirstPersonMode := 0
 
 	if (p_bToggleOffCapsLock)
@@ -277,7 +347,7 @@ SendLeftMouseButton()
 ; Buy/Sell/Use in bulk (highlight the desired item beforehand)
 ToggleAutobuy(*)
 {
-	Send((ToggleStates.bAutobuy ^= 1) ? "{Shift down}{" g_sActionKey " down}" : "{Shift up}{" g_sActionKey " up}")
+	Send((ToggleStates.bAutobuy ^= 1) ? "{LShift down}{" g_sActionKey " down}" : "{LShift up}{" g_sActionKey " up}")
 
 	; Spam left-click to buy/sell/use items faster
 	SetTimer(SendLeftMouseButton, ToggleStates.bAutobuy * g_iAutobuyClickFrequency)
