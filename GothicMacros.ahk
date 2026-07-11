@@ -217,6 +217,7 @@ ReadConfigFile()
 	local l_sConfigFile := "GothicMacros.ini"
 
 	; General
+	g_bAutobuyStacks := IniRead(l_sConfigFile, "General", "bAutobuyStacks", false) == true
 	g_bBeepOnSuspend := IniRead(l_sConfigFile, "General", "bBeepOnSuspend", true) == true
 	g_bWaitForSneakAnimation := IniRead(l_sConfigFile, "General", "bWaitForSneakAnimation", false) == true
 
@@ -347,7 +348,12 @@ SendLeftMouseButton()
 ; Buy/Sell/Use in bulk (highlight the desired item beforehand)
 ToggleAutobuy(*)
 {
-	Send((ToggleStates.bAutobuy ^= 1) ? "{LShift down}{" g_sActionKey " down}" : "{LShift up}{" g_sActionKey " up}")
+	ToggleStates.bAutobuy ^= 1
+
+	if (g_bAutobuyStacks)
+		Send(ToggleStates.bAutobuy ? "{LShift down}" : "{LShift up}")
+	else
+		Send(ToggleStates.bAutobuy ? "{" g_sActionKey " down}" :  "{" g_sActionKey " up}")
 
 	; Spam left-click to buy/sell/use items faster
 	SetTimer(SendLeftMouseButton, ToggleStates.bAutobuy * g_iAutobuyClickFrequency)
