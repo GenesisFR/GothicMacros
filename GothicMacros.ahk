@@ -406,6 +406,7 @@ ToggleSteamOverlay(*)
 	KeyWait(g_sSteamOverlayKey)
 }
 
+; When doing Shift + left-click to buy stacks of 100 items
 #HotIf WinActive(g_sWindowTitle) && g_sToggleWalkKey && !ToggleStates.bSteamOverlay
 <+LButton::
 {
@@ -418,6 +419,7 @@ ToggleSteamOverlay(*)
 }
 #HotIf
 
+; When right-click has been remapped
 #HotIf WinActive(g_sWindowTitle) && g_sRightClickKey && !ToggleStates.bSteamOverlay
 *RButton::
 {
@@ -440,13 +442,20 @@ ToggleSteamOverlay(*)
 #HotIf
 
 #SuspendExempt
+; Automatically reload the script after saving in VSCode (skipped in the compiled script)
+;@Ahk2Exe-IgnoreBegin
+#HotIf WinActive("Visual Studio Code") && InStr(WinGetTitle("A"), A_ScriptName)
+~^s::Send("^+{F5}")
+#HotIf
+;@Ahk2Exe-IgnoreEnd
+
 ; Exit script (CTRL + ALT + F10)
 *~^!F10::ExitApp()
 
 ; Reload script (CTRL + ALT + F11)
 *~^!F11::Reload()
 
-; Suspend script (CTRL + ALT + F12, useful in menus)
+; Suspend script, useful in menus (CTRL + ALT + F12)
 *~^!F12::
 {
 	Suspend()
