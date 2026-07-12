@@ -466,13 +466,7 @@ ToggleSteamOverlay(*)
 
 ; Right-click remap
 #HotIf WinActive(g_sWindowTitle) && g_sRightClickKey && !ToggleStates.bSteamOverlay
-*$RButton::
-{
-	if (ToggleStates.bAutobuy)
-		ToggleAutobuy()
-
-	Send("{" g_sRightClickKey " down}")
-}
+*$RButton::Send("{" g_sRightClickKey " down}")
 *$RButton up::Send("{" g_sRightClickKey " up}")
 
 ; XButton1 remap
@@ -485,19 +479,19 @@ ToggleSteamOverlay(*)
 *$XButton2::Send("{" g_sXButton2Key " down}")
 *$XButton2 up::Send("{" g_sXButton2Key " up}")
 
+#HotIf WinActive(g_sWindowTitle) && !GetKeyState("Escape", "P") && !ToggleStates.bSteamOverlay
+*$Escape::
+{
+	ResetAll(false)
+	Send((g_bForceShiftEscape ? "+" : "") "{Escape}")
+}
+
 #HotIf WinActive(g_sWindowTitle) && !ToggleStates.bSteamOverlay
 *~LButton::
 *~RButton::
 {
 	if (ToggleStates.bAutobuy)
 		ToggleAutobuy()
-}
-
-#HotIf WinActive(g_sWindowTitle) && !GetKeyState("Escape", "P") && !ToggleStates.bSteamOverlay
-*$Escape::
-{
-	ResetAll(false)
-	Send((g_bForceShiftEscape ? "+" : "") "{Escape}")
 }
 
 #SuspendExempt
