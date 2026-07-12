@@ -222,6 +222,7 @@ ReadConfigFile()
 	g_bBeepOnSuspend                  := IniRead(l_sConfigFile, "General", "bBeepOnSuspend", true) == true
 	g_bForceShiftEscape               := IniRead(l_sConfigFile, "General", "bForceShiftEscape", false) == true
 	g_bInvertControlsWhenAutoswimming := IniRead(l_sConfigFile, "General", "bInvertControlsWhenAutoswimming", false) == true
+	g_bSuspendDuringMarvinMode        := IniRead(l_sConfigFile, "General", "bSuspendDuringMarvinMode", true) == true
 	g_bWaitForSneakAnimation          := IniRead(l_sConfigFile, "General", "bWaitForSneakAnimation", false) == true
 
 	if !IsInteger(g_iAutobuyClickFrequency := IniRead(l_sConfigFile, "General", "iAutobuyClickFrequency", 100))
@@ -258,18 +259,18 @@ ReadConfigFile()
 	g_iAutojumpFrequency     := Max(g_iAutojumpFrequency, 1)
 }
 
-RegisterHotkey(p_sPrefix, p_sHotkey, p_fnAction, p_sSuffix := "")
+RegisterHotkey(p_sPrefix, p_sHotkey, p_fnAction, p_sSuffix := "", p_bSuspendExempt := false)
 {
 	; If the hotkey is empty, don't register it (allows keys like toggles to be optional)
 	if (p_sHotkey)
-		Hotkey(p_sPrefix p_sHotkey p_sSuffix, p_fnAction, "On")
+		Hotkey(p_sPrefix p_sHotkey p_sSuffix, p_fnAction, p_bSuspendExempt ? "On S" : "On S0")
 }
 
 RegisterHotkeys()
 {
 	; Hotkeys fired only when Gothic is the active window
 	HotIfWinActive(g_sWindowTitle)
-		RegisterHotkey("*", g_sSteamOverlayKey, ToggleSteamOverlay, " up")
+		RegisterHotkey("*", g_sSteamOverlayKey, ToggleSteamOverlay, " up", true)
 	HotIfWinActive()
 
 	; Hotkeys fired only when Gothic is the active window, the key isn't being held and the Steam overlay is not in the foreground
@@ -291,7 +292,7 @@ RegisterHotkeys()
 	HotIf((*) => WinActive(g_sWindowTitle) && !HoldStates.bWalking && !ToggleStates.bSteamOverlay)
 		RegisterHotkey("*", g_sToggleWalkKey, OnWalkPress)
 	HotIf((*) => WinActive(g_sWindowTitle) && !MacroStates.bMarvin && !ToggleStates.bSteamOverlay)
-		RegisterHotkey("*~", g_sToggleMarvinModeKey, ToggleMarvinMode, " up")
+		RegisterHotkey("*~", g_sToggleMarvinModeKey, ToggleMarvinMode, " up", true)
 
 	; Hotkeys fired only when Gothic is the active window and the Steam overlay is not in the foreground
 	HotIf((*) => WinActive(g_sWindowTitle) && !ToggleStates.bSteamOverlay)
@@ -411,6 +412,9 @@ ToggleMarvinMode(*)
 	Output("Marvin mode toggled " ((ToggleStates.bMarvinMode ^= 1) ? "on" : "off"))
 	ResetAll()
 	Marvin()
+
+	if (g_bSuspendDuringMarvinMode)
+		Suspend(ToggleStates.bMarvinMode)
 }
 
 ToggleSneakOff()
@@ -470,6 +474,13 @@ ToggleSteamOverlay(*)
 	Send((g_bForceShiftEscape ? "+" : "") "{Escape}")
 }
 
+#SuspendExempt
+; Automatically reload the script after saving in VSCode (skipped in the compiled script)
+;@Ahk2Exe-IgnoreBegin
+#HotIf WinActive("Visual Studio Code") && InStr(WinGetTitle("A"), A_ScriptName)
+~^s::Send("^+{F5}")
+;@Ahk2Exe-IgnoreEnd
+
 ; Escape can also be used to close the Steam overlay
 #HotIf WinActive(g_sWindowTitle) && ToggleStates.bSteamOverlay
 *~Escape::
@@ -477,14 +488,7 @@ ToggleSteamOverlay(*)
 	Output("Steam overlay toggled off")
 	ToggleStates.bSteamOverlay := 0
 }
-
-#SuspendExempt
-; Automatically reload the script after saving in VSCode (skipped in the compiled script)
-;@Ahk2Exe-IgnoreBegin
-#HotIf WinActive("Visual Studio Code") && InStr(WinGetTitle("A"), A_ScriptName)
-~^s::Send("^+{F5}")
 #HotIf
-;@Ahk2Exe-IgnoreEnd
 
 ; Exit script (CTRL + ALT + F10)
 *~^!F10::ExitApp()
@@ -496,6 +500,15 @@ ToggleSteamOverlay(*)
 *~^!F12::
 {
 	Suspend()
+
+	; Manually suspending the script should force exempted hotkeys to also be suspended
+	HotIfWinActive(g_sWindowTitle)
+	RegisterHotkey("*", g_sSteamOverlayKey, ToggleSteamOverlay, " up", !A_IsSuspended)
+	HotIfWinActive()
+
+	HotIf((*) => WinActive(g_sWindowTitle) && !MacroStates.bMarvin && !ToggleStates.bSteamOverlay)
+	RegisterHotkey("*~", g_sToggleMarvinModeKey, ToggleMarvinMode, " up", !A_IsSuspended)
+	HotIf()
 
 	; Single beep when suspended
 	if (g_bBeepOnSuspend)
