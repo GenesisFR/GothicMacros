@@ -230,7 +230,7 @@ ReadConfigFile()
 	if !IsInteger(g_iAutojumpFrequency := IniRead(l_sConfigFile, "General", "iAutojumpFrequency", 500))
 		g_iAutojumpFrequency := 500
 
-	; Mandatory Keys
+	; Mandatory keys
 	g_sActionKey       := IniRead(l_sConfigFile, "MandatoryKeys", "sActionKey", "f")
 	g_sBackwardKey     := IniRead(l_sConfigFile, "MandatoryKeys", "sBackwardKey", "s")
 	g_sForwardKey      := IniRead(l_sConfigFile, "MandatoryKeys", "sForwardKey", "w")
@@ -238,11 +238,10 @@ ReadConfigFile()
 	g_sPlayerStatusKey := IniRead(l_sConfigFile, "MandatoryKeys", "sPlayerStatusKey", "z")
 	g_sSteamOverlayKey := IniRead(l_sConfigFile, "MandatoryKeys", "sSteamOverlayKey", "ScrollLock")
 
-	; Optional Keys
+	; Optional keys
 	g_sFastAttackKey            := IniRead(l_sConfigFile, "OptionalKeys", "sFastAttackKey", "")
 	g_sLootKey                  := IniRead(l_sConfigFile, "OptionalKeys", "sLootKey", "")
 	g_sQuickLoadKey             := IniRead(l_sConfigFile, "OptionalKeys", "sQuickLoadKey", "")
-	g_sRightClickKey            := IniRead(l_sConfigFile, "OptionalKeys", "sRightClickKey", "")
 	g_sSmithKey                 := IniRead(l_sConfigFile, "OptionalKeys", "sSmithKey", "")
 	g_sSneakKey                 := IniRead(l_sConfigFile, "OptionalKeys", "sSneakKey", "")
 	g_sToggleAutobuyKey         := IniRead(l_sConfigFile, "OptionalKeys", "sToggleAutobuyKey", "")
@@ -253,6 +252,13 @@ ReadConfigFile()
 	g_sToggleFirstPersonModeKey := IniRead(l_sConfigFile, "OptionalKeys", "sToggleFirstPersonModeKey", "")
 	g_sToggleMarvinModeKey      := IniRead(l_sConfigFile, "OptionalKeys", "sToggleMarvinModeKey", "")
 	g_sToggleWalkKey            := IniRead(l_sConfigFile, "OptionalKeys", "sToggleWalkKey", "")
+
+	; Remappable keys
+	g_sLeftClickKey   := IniRead(l_sConfigFile, "RemappableKeys", "sLeftClickKey", "")
+	g_sMiddleClickKey := IniRead(l_sConfigFile, "RemappableKeys", "sMiddleClickKey", "")
+	g_sRightClickKey  := IniRead(l_sConfigFile, "RemappableKeys", "sRightClickKey", "")
+	g_sXButton1Key    := IniRead(l_sConfigFile, "RemappableKeys", "sXButton1Key", "")
+	g_sXButton2Key    := IniRead(l_sConfigFile, "RemappableKeys", "sXButton2Key", "")
 
 	; Prevent some variables from being negative or set to 0, otherwise timers won't work
 	g_iAutobuyClickFrequency := Max(g_iAutobuyClickFrequency, 1)
@@ -448,7 +454,17 @@ ToggleSteamOverlay(*)
 	SetCapsLockState(l_bPrevCapsLockState)
 }
 
-; When right-click has been remapped
+; Left-click remap
+#HotIf WinActive(g_sWindowTitle) && g_sLeftClickKey && !ToggleStates.bSteamOverlay
+*$LButton::Send("{" g_sLeftClickKey " down}")
+*$LButton up::Send("{" g_sLeftClickKey " up}")
+
+; Middle-click remap
+#HotIf WinActive(g_sWindowTitle) && g_sMiddleClickKey && !ToggleStates.bSteamOverlay
+*$MButton::Send("{" g_sMiddleClickKey " down}")
+*$MButton up::Send("{" g_sMiddleClickKey " up}")
+
+; Right-click remap
 #HotIf WinActive(g_sWindowTitle) && g_sRightClickKey && !ToggleStates.bSteamOverlay
 *$RButton::
 {
@@ -458,6 +474,16 @@ ToggleSteamOverlay(*)
 	Send("{" g_sRightClickKey " down}")
 }
 *$RButton up::Send("{" g_sRightClickKey " up}")
+
+; XButton1 remap
+#HotIf WinActive(g_sWindowTitle) && g_sXButton1Key && !ToggleStates.bSteamOverlay
+*$XButton1::Send("{" g_sXButton1Key " down}")
+*$XButton1 up::Send("{" g_sXButton1Key " up}")
+
+; XButton2 remap
+#HotIf WinActive(g_sWindowTitle) && g_sXButton2Key && !ToggleStates.bSteamOverlay
+*$XButton2::Send("{" g_sXButton2Key " down}")
+*$XButton2 up::Send("{" g_sXButton2Key " up}")
 
 #HotIf WinActive(g_sWindowTitle) && !ToggleStates.bSteamOverlay
 *~LButton::
