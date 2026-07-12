@@ -106,16 +106,10 @@ OnFocusChanged(*)
 	}
 }
 
-OnForwardPress(*)
-{
-	ToggleStates.bAutorun := 0
-}
-
 ; Turn off autojump
 OnJumpPress(*)
 {
-	ToggleStates.bAutoswim := 0
-	SetTimer(SendJump, ToggleStates.bAutojump := 0)
+	SetTimer(SendJump, ToggleStates.bAutojump := ToggleStates.bAutoswim := 0)
 }
 
 OnLootPress(*)
@@ -271,7 +265,7 @@ RegisterHotkeys()
 	; Hotkeys fired only when Gothic is the active window, the key isn't being held and the Steam overlay is not in the foreground
 	HotIf((*) => WinActive(g_sWindowTitle) && !HoldStates.bFastAttacking && !ToggleStates.bSteamOverlay)
 		RegisterHotkey("*~", g_sFastAttackKey, OnFastAttackPress)
-	HotIf((*) => WinActive(g_sWindowTitle) && ToggleStates.bAutoswim && g_bInvertControlsWhenAutoSwimming && !ToggleStates.bSteamOverlay)
+	HotIf((*) => WinActive(g_sWindowTitle) && ToggleStates.bAutoswim && g_bInvertControlsWhenAutoswimming && !ToggleStates.bSteamOverlay)
 		RegisterHotkey("*", g_sBackwardKey, (*) => Send("{" g_sForwardKey " down}"))
 		RegisterHotkey("*", g_sBackwardKey, (*) => Send("{" g_sForwardKey " up}"), " up")
 		RegisterHotkey("*", g_sForwardKey, (*) => Send("{" g_sBackwardKey " down}"))
@@ -289,19 +283,19 @@ RegisterHotkeys()
 
 	; Hotkeys fired only when Gothic is the active window and the Steam overlay is not in the foreground
 	HotIf((*) => WinActive(g_sWindowTitle) && !ToggleStates.bSteamOverlay)
-		RegisterHotkey("*~", g_sForwardKey, OnForwardPress)
+		RegisterHotkey("*~", g_sForwardKey, (*) => ToggleStates.bAutorun := 0)
 		RegisterHotkey("*~", g_sJumpKey, OnJumpPress)
 		RegisterHotkey("*~", g_sQuickLoadKey, OnQuickLoadPress)
 		RegisterHotkey("*~", g_sFastAttackKey, OnFastAttackRelease, " up")
 		RegisterHotkey("*~", g_sLootKey, OnLootRelease, " up")
 		RegisterHotkey("*~", g_sSmithKey, OnSmithRelease, " up")
-		RegisterHotkey("*",  g_sToggleWalkKey, OnWalkRelease, " up")
 		RegisterHotkey("*~", g_sToggleAutobuyKey, ToggleAutobuy, " up")
 		RegisterHotkey("*~", g_sToggleAutocookKey, ToggleAutocook, " up")
 		RegisterHotkey("*~", g_sToggleAutojumpKey, ToggleAutojump, " up")
 		RegisterHotkey("*~", g_sToggleAutorunKey, ToggleAutorun, " up")
 		RegisterHotkey("*~", g_sToggleAutoswimKey, ToggleAutoswim, " up")
 		RegisterHotkey("*~", g_sToggleFirstPersonModeKey, ToggleFirstPersonMode, " up")
+		RegisterHotkey("*",  g_sToggleWalkKey, OnWalkRelease, " up")
 	HotIf()
 }
 
