@@ -196,10 +196,11 @@ ReadConfigFile()
 	local l_sConfigFile := "GothicMacros.ini"
 
 	; General
-	g_bAutobuyStacks := IniRead(l_sConfigFile, "General", "bAutobuyStacks", false) == true
-	g_bBeepOnSuspend := IniRead(l_sConfigFile, "General", "bBeepOnSuspend", true) == true
-	g_bInvertControlsWhenAutoSwimming := IniRead(l_sConfigFile, "General", "bInvertControlsWhenAutoSwimming", false) == true
-	g_bWaitForSneakAnimation := IniRead(l_sConfigFile, "General", "bWaitForSneakAnimation", false) == true
+	g_bAutobuyStacks                  := IniRead(l_sConfigFile, "General", "bAutobuyStacks", false) == true
+	g_bBeepOnSuspend                  := IniRead(l_sConfigFile, "General", "bBeepOnSuspend", true) == true
+	g_bForceShiftEscape               := IniRead(l_sConfigFile, "General", "bForceShiftEscape", false) == true
+	g_bInvertControlsWhenAutoswimming := IniRead(l_sConfigFile, "General", "bInvertControlsWhenAutoswimming", false) == true
+	g_bWaitForSneakAnimation          := IniRead(l_sConfigFile, "General", "bWaitForSneakAnimation", false) == true
 
 	if !IsInteger(g_iAutobuyClickFrequency := IniRead(l_sConfigFile, "General", "iAutobuyClickFrequency", 100))
 		g_iAutobuyClickFrequency := 100
@@ -405,29 +406,40 @@ ToggleSteamOverlay(*)
 	KeyWait("LShift")
 	SetCapsLockState(l_bPrevCapsLockState)
 }
-#HotIf
 
 ; When right-click has been remapped
 #HotIf WinActive(g_sWindowTitle) && g_sRightClickKey && !ToggleStates.bSteamOverlay
-*RButton::
+*$RButton::
 {
 	if (ToggleStates.bAutobuy)
 		ToggleAutobuy()
 
 	Send("{" g_sRightClickKey " down}")
 }
-*RButton up::Send("{" g_sRightClickKey " up}")
-#HotIf
+*$RButton up::Send("{" g_sRightClickKey " up}")
 
 #HotIf WinActive(g_sWindowTitle) && !ToggleStates.bSteamOverlay
-*~Escape::ResetAll(false)
 *~LButton::
 *~RButton::
 {
 	if (ToggleStates.bAutobuy)
 		ToggleAutobuy()
 }
-#HotIf
+
+#HotIf WinActive(g_sWindowTitle) && !GetKeyState("Escape", "P") && !ToggleStates.bSteamOverlay
+*$Escape::
+{
+	ResetAll(false)
+	Send((g_bForceShiftEscape ? "+" : "") "{Escape}")
+}
+
+; Escape can also be used to close the Steam overlay
+#HotIf WinActive(g_sWindowTitle) && ToggleStates.bSteamOverlay
+*~Escape::
+{
+	Output("Steam overlay toggled off")
+	ToggleStates.bSteamOverlay := 0
+}
 
 #SuspendExempt
 ; Automatically reload the script after saving in VSCode (skipped in the compiled script)
