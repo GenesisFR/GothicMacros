@@ -236,7 +236,7 @@ ReadConfigFile()
 	g_sForwardKey      := IniRead(l_sConfigFile, "MandatoryKeys", "sForwardKey", "w")
 	g_sJumpKey         := IniRead(l_sConfigFile, "MandatoryKeys", "sJumpKey", "Space")
 	g_sPlayerStatusKey := IniRead(l_sConfigFile, "MandatoryKeys", "sPlayerStatusKey", "z")
-	g_sQuickLoadKey    := IniRead(l_sConfigFile, "MandatoryKeys", "sQuickLoadKey", "")
+	g_sQuickLoadKey    := IniRead(l_sConfigFile, "MandatoryKeys", "sQuickLoadKey", "F9")
 	g_sSteamOverlayKey := IniRead(l_sConfigFile, "MandatoryKeys", "sSteamOverlayKey", "ScrollLock")
 
 	; Optional keys
