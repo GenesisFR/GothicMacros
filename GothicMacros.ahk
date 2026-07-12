@@ -244,7 +244,7 @@ RegisterHotkeys()
 {
 	; Hotkeys fired only when Gothic is the active window
 	HotIfWinActive(g_sWindowTitle)
-		RegisterHotkey("*", g_sSteamOverlayKey, ToggleSteamOverlay)
+		RegisterHotkey("*", g_sSteamOverlayKey, ToggleSteamOverlay, " up")
 	HotIfWinActive()
 
 	; Hotkeys fired only when Gothic is the active window, the key isn't being held and the Steam overlay is not in the foreground
@@ -389,10 +389,9 @@ ToggleSneakOff()
 
 ToggleSteamOverlay(*)
 {
-	ToggleStates.bSteamOverlay ^= 1
+	Output("Steam overlay toggled " ((ToggleStates.bSteamOverlay ^= 1) ? "on" : "off"))
 	ResetAll()
 	SendKey(g_sSteamOverlayKey)
-	KeyWait(g_sSteamOverlayKey)
 }
 
 ; When doing Shift + left-click to buy stacks of 100 items
