@@ -124,12 +124,6 @@ OnLootRelease(*)
 	SetTimer(SendAction, HoldStates.bLooting := 0)
 }
 
-OnQuickLoadPress(*)
-{
-	ResetAll()
-	KeyWait(g_sQuickLoadKey)
-}
-
 ; Tap the Action key then spam Backward until the Smithing key is released
 OnSmithPress(*)
 {
@@ -141,6 +135,12 @@ OnSmithPress(*)
 OnSmithRelease(*)
 {
 	SetTimer(SendBackward, HoldStates.bSmithing := 0)
+}
+
+OnSneakOffAnimComplete()
+{
+	Output(A_ThisFunc)
+	HoldStates.bSneaking := 0
 }
 
 OnSneakPress(*)
@@ -168,21 +168,6 @@ OnSneakRelease(*)
 			Output(A_ThisFunc "::delaying sneak tap by " l_iSneakOffDelay "ms")
 			SetTimer(ToggleSneakOff, -l_iSneakOffDelay)
 		}
-	}
-
-	ToggleSneakOff()
-	{
-		Output(A_ThisFunc)
-		SendKey(g_sSneakKey)
-
-		; Wait until the animation is over before allowing the Sneak key to be pressed again
-		SetTimer(OnSneakOffAnimComplete, -AnimationStates.GetSneakAnimDuration())
-	}
-
-	OnSneakOffAnimComplete()
-	{
-		Output(A_ThisFunc)
-		HoldStates.bSneaking := 0
 	}
 }
 
@@ -283,11 +268,11 @@ RegisterHotkeys()
 
 	; Hotkeys fired only when Gothic is the active window and the Steam overlay is not in the foreground
 	HotIf((*) => WinActive(g_sWindowTitle) && !ToggleStates.bSteamOverlay)
+		RegisterHotkey("*~", g_sFastAttackKey, OnFastAttackRelease, " up")
 		RegisterHotkey("*~", g_sForwardKey, (*) => ToggleStates.bAutorun := 0)
 		RegisterHotkey("*~", g_sJumpKey, OnJumpPress)
-		RegisterHotkey("*~", g_sQuickLoadKey, OnQuickLoadPress)
-		RegisterHotkey("*~", g_sFastAttackKey, OnFastAttackRelease, " up")
 		RegisterHotkey("*~", g_sLootKey, OnLootRelease, " up")
+		RegisterHotkey("*~", g_sQuickLoadKey, (*) => ResetAll())
 		RegisterHotkey("*~", g_sSmithKey, OnSmithRelease, " up")
 		RegisterHotkey("*~", g_sToggleAutobuyKey, ToggleAutobuy, " up")
 		RegisterHotkey("*~", g_sToggleAutocookKey, ToggleAutocook, " up")
@@ -302,7 +287,7 @@ RegisterHotkeys()
 ResetAll(p_bToggleOffCapsLock := true)
 {
 	; Delete timers
-	for l_fnTimer in [Cook, SendAction, SendBackward, SendJump, SendLeftMouseButton]
+	for l_fnTimer in [Cook, OnSneakOffAnimComplete, SendAction, SendBackward, SendJump, SendLeftMouseButton, ToggleSneakOff]
 		SetTimer(l_fnTimer, 0)
 
 	; Release keys
@@ -314,6 +299,7 @@ ResetAll(p_bToggleOffCapsLock := true)
 	HoldStates.bFastAttacking := HoldStates.bSmithing := HoldStates.bSneaking := HoldStates.bWalking := 0
 	ToggleStates.bAutobuy := ToggleStates.bAutocook := ToggleStates.bAutojump := ToggleStates.bAutorun := ToggleStates.bAutoswim := ToggleStates.bFirstPersonMode := 0
 
+	; Reset Caps Lock
 	if (p_bToggleOffCapsLock)
 		SetCapsLockState(ToggleStates.bWalk := 0)
 }
@@ -390,6 +376,15 @@ ToggleAutoswim(*)
 ToggleFirstPersonMode(*)
 {
 	Send("{" g_sToggleFirstPersonModeKey ((ToggleStates.bFirstPersonMode ^= 1) ? " down}" : " up}"))
+}
+
+ToggleSneakOff()
+{
+	Output(A_ThisFunc)
+	SendKey(g_sSneakKey)
+
+	; Wait until the animation is over before allowing the Sneak key to be pressed again
+	SetTimer(OnSneakOffAnimComplete, -AnimationStates.GetSneakAnimDuration())
 }
 
 ToggleSteamOverlay(*)
