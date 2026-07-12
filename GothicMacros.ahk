@@ -236,12 +236,12 @@ ReadConfigFile()
 	g_sForwardKey      := IniRead(l_sConfigFile, "MandatoryKeys", "sForwardKey", "w")
 	g_sJumpKey         := IniRead(l_sConfigFile, "MandatoryKeys", "sJumpKey", "Space")
 	g_sPlayerStatusKey := IniRead(l_sConfigFile, "MandatoryKeys", "sPlayerStatusKey", "z")
+	g_sQuickLoadKey    := IniRead(l_sConfigFile, "MandatoryKeys", "sQuickLoadKey", "")
 	g_sSteamOverlayKey := IniRead(l_sConfigFile, "MandatoryKeys", "sSteamOverlayKey", "ScrollLock")
 
 	; Optional keys
 	g_sFastAttackKey            := IniRead(l_sConfigFile, "OptionalKeys", "sFastAttackKey", "")
 	g_sLootKey                  := IniRead(l_sConfigFile, "OptionalKeys", "sLootKey", "")
-	g_sQuickLoadKey             := IniRead(l_sConfigFile, "OptionalKeys", "sQuickLoadKey", "")
 	g_sSmithKey                 := IniRead(l_sConfigFile, "OptionalKeys", "sSmithKey", "")
 	g_sSneakKey                 := IniRead(l_sConfigFile, "OptionalKeys", "sSneakKey", "")
 	g_sToggleAutobuyKey         := IniRead(l_sConfigFile, "OptionalKeys", "sToggleAutobuyKey", "")
