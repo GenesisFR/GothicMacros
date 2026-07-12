@@ -23,6 +23,10 @@ class HoldStates
 	static bWalking       := 0
 }
 
+class MacroStates {
+	static bMarvin := 0
+}
+
 class ToggleStates
 {
 	static bAutobuy         := 0
@@ -31,6 +35,7 @@ class ToggleStates
 	static bAutorun         := 0
 	static bAutoswim        := 0
 	static bFirstPersonMode := 0
+	static bMarvinMode      := 0
 	static bSteamOverlay    := 0
 	static bWalk            := 0
 }
@@ -60,11 +65,6 @@ Init()
 	OnExit((*) => ResetAll())
 }
 
-CleanHotkey(p_sHotkey)
-{
-	return LTrim(RTrim(p_sHotkey, " up"), "~*$")
-}
-
 Cook(p_iStep := 1)
 {
 	switch p_iStep
@@ -81,6 +81,28 @@ Cook(p_iStep := 1)
 		case 2:
 			Send("{" g_sActionKey " up}{" g_sBackwardKey " up}")
 			SetTimer(Cook, ToggleStates.bAutocook * -1200)
+	}
+}
+
+Marvin(p_iStep := 1)
+{
+	switch p_iStep
+	{
+		; Open the player status menu
+		case 1:
+			SendKey(g_sPlayerStatusKey)
+			SetTimer(Marvin.Bind(2), (MacroStates.bMarvin ^= 1) * -100)
+		; Toggle Marvin mode
+		case 2:
+			Send(ToggleStates.bMarvinMode ? "marvin" : "42")
+			SetTimer(Marvin.Bind(3), MacroStates.bMarvin * -100)
+		; Close the player status menu
+		case 3:
+			SendKey(g_sPlayerStatusKey)
+			SetTimer(Marvin.Bind(4), MacroStates.bMarvin * -100)
+		; Allow Marvin mode to be toggled again
+		case 4:
+			SetTimer(Marvin, MacroStates.bMarvin := 0)
 	}
 }
 
@@ -212,6 +234,7 @@ ReadConfigFile()
 	g_sBackwardKey     := IniRead(l_sConfigFile, "MandatoryKeys", "sBackwardKey", "s")
 	g_sForwardKey      := IniRead(l_sConfigFile, "MandatoryKeys", "sForwardKey", "w")
 	g_sJumpKey         := IniRead(l_sConfigFile, "MandatoryKeys", "sJumpKey", "Space")
+	g_sPlayerStatusKey := IniRead(l_sConfigFile, "MandatoryKeys", "sPlayerStatusKey", "z")
 	g_sSteamOverlayKey := IniRead(l_sConfigFile, "MandatoryKeys", "sSteamOverlayKey", "ScrollLock")
 
 	; Optional Keys
@@ -227,6 +250,7 @@ ReadConfigFile()
 	g_sToggleAutorunKey         := IniRead(l_sConfigFile, "OptionalKeys", "sToggleAutorunKey", "")
 	g_sToggleAutoswimKey        := IniRead(l_sConfigFile, "OptionalKeys", "sToggleAutoswimKey", "")
 	g_sToggleFirstPersonModeKey := IniRead(l_sConfigFile, "OptionalKeys", "sToggleFirstPersonModeKey", "")
+	g_sToggleMarvinModeKey      := IniRead(l_sConfigFile, "OptionalKeys", "sToggleMarvinModeKey", "")
 	g_sToggleWalkKey            := IniRead(l_sConfigFile, "OptionalKeys", "sToggleWalkKey", "")
 
 	; Prevent some variables from being negative or set to 0, otherwise timers won't work
@@ -266,6 +290,8 @@ RegisterHotkeys()
 		RegisterHotkey("*~", g_sSneakKey, OnSneakRelease, " up")
 	HotIf((*) => WinActive(g_sWindowTitle) && !HoldStates.bWalking && !ToggleStates.bSteamOverlay)
 		RegisterHotkey("*", g_sToggleWalkKey, OnWalkPress)
+	HotIf((*) => WinActive(g_sWindowTitle) && !MacroStates.bMarvin && !ToggleStates.bSteamOverlay)
+		RegisterHotkey("*~", g_sToggleMarvinModeKey, ToggleMarvinMode, " up")
 
 	; Hotkeys fired only when Gothic is the active window and the Steam overlay is not in the foreground
 	HotIf((*) => WinActive(g_sWindowTitle) && !ToggleStates.bSteamOverlay)
@@ -288,7 +314,7 @@ RegisterHotkeys()
 ResetAll(p_bToggleOffCapsLock := true)
 {
 	; Delete timers
-	for l_fnTimer in [Cook, OnSneakOffAnimComplete, SendAction, SendBackward, SendJump, SendLeftMouseButton, ToggleSneakOff]
+	for l_fnTimer in [Cook, Marvin, OnSneakOffAnimComplete, SendAction, SendBackward, SendJump, SendLeftMouseButton, ToggleSneakOff]
 		SetTimer(l_fnTimer, 0)
 
 	; Release keys
@@ -298,6 +324,7 @@ ResetAll(p_bToggleOffCapsLock := true)
 	; Reset states
 	AnimationStates.iSneakTimePressed := 0
 	HoldStates.bFastAttacking := HoldStates.bSmithing := HoldStates.bSneaking := HoldStates.bWalking := 0
+	MacroStates.bMarvin := 0
 	ToggleStates.bAutobuy := ToggleStates.bAutocook := ToggleStates.bAutojump := ToggleStates.bAutorun := ToggleStates.bAutoswim := ToggleStates.bFirstPersonMode := 0
 
 	; Reset Caps Lock
@@ -379,6 +406,13 @@ ToggleFirstPersonMode(*)
 	Send("{" g_sToggleFirstPersonModeKey ((ToggleStates.bFirstPersonMode ^= 1) ? " down}" : " up}"))
 }
 
+ToggleMarvinMode(*)
+{
+	Output("Marvin mode toggled " ((ToggleStates.bMarvinMode ^= 1) ? "on" : "off"))
+	ResetAll()
+	Marvin()
+}
+
 ToggleSneakOff()
 {
 	Output(A_ThisFunc)
@@ -390,9 +424,12 @@ ToggleSneakOff()
 
 ToggleSteamOverlay(*)
 {
-	Output("Steam overlay toggled " ((ToggleStates.bSteamOverlay ^= 1) ? "on" : "off"))
-	ResetAll()
-	SendKey(g_sSteamOverlayKey)
+	if (!MacroStates.bMarvin)
+	{
+		Output("Steam overlay toggled " ((ToggleStates.bSteamOverlay ^= 1) ? "on" : "off"))
+		ResetAll()
+		SendKey(g_sSteamOverlayKey)
+	}
 }
 
 ; When doing Shift + left-click to buy stacks of 100 items
