@@ -3,14 +3,14 @@
 
 class AnimationStates
 {
-	static SNEAK_ANIM_DURATION_IDLE := 500
+	static SNEAK_ANIM_DURATION_STILL := 500
 	static SNEAK_ANIM_DURATION_MOVING := 200
 	static iSneakTimePressed := 0
 
 	static GetSneakAnimDuration()
 	{
 		; The transition between standing up and sneaking is shorter when moving forward
-		return GetKeyState(g_sForwardKey) ? AnimationStates.SNEAK_ANIM_DURATION_MOVING : AnimationStates.SNEAK_ANIM_DURATION_IDLE
+		return GetKeyState(g_sForwardKey) ? AnimationStates.SNEAK_ANIM_DURATION_MOVING : AnimationStates.SNEAK_ANIM_DURATION_STILL
 	}
 }
 
@@ -91,15 +91,15 @@ Marvin(p_iStep := 1)
 		; Open the player status menu
 		case 1:
 			SendKey(g_sPlayerStatusKey)
-			SetTimer(Marvin.Bind(2), (MacroStates.bMarvin ^= 1) * -100)
+			SetTimer(Marvin.Bind(2), -100 * MacroStates.bMarvin ^= 1)
 		; Toggle Marvin mode
 		case 2:
 			Send(ToggleStates.bMarvinMode ? "marvin" : "42")
-			SetTimer(Marvin.Bind(3), MacroStates.bMarvin * -100)
+			SetTimer(Marvin.Bind(3), -100 * MacroStates.bMarvin)
 		; Close the player status menu
 		case 3:
 			SendKey(g_sPlayerStatusKey)
-			SetTimer(Marvin.Bind(4), MacroStates.bMarvin * -100)
+			SetTimer(Marvin.Bind(4), -100 * MacroStates.bMarvin)
 		; Allow Marvin mode to be toggled again
 		case 4:
 			SetTimer(Marvin, MacroStates.bMarvin := 0)
@@ -136,9 +136,8 @@ OnJumpPress(*)
 
 OnLootPress(*)
 {
-	HoldStates.bLooting := 1
 	SendKey(g_sActionKey)
-	SetTimer(SendAction, 200)
+	SetTimer(SendAction, 200 * HoldStates.bLooting := 1)
 }
 
 OnLootRelease(*)
@@ -149,9 +148,8 @@ OnLootRelease(*)
 ; Tap the Action key then spam Backward until the Smithing key is released
 OnSmithPress(*)
 {
-	HoldStates.bSmithing := 1
 	SendKey(g_sActionKey)
-	SetTimer(SendBackward, 200)
+	SetTimer(SendBackward, 200 * HoldStates.bSmithing := 1)
 }
 
 OnSmithRelease(*)
@@ -203,6 +201,8 @@ OnWalkRelease(*)
 {
 	HoldStates.bWalking := 0
 	Send("{Blind}{" g_sToggleWalkKey " up}")
+
+	; We need to sync CapsLock with the Walk toggle state
 	SetCapsLockState(ToggleStates.bWalk ^= 1)
 }
 
@@ -227,17 +227,17 @@ ReadConfigFile()
 
 	if !IsInteger(g_iAutobuyClickFrequency := IniRead(l_sConfigFile, "General", "iAutobuyClickFrequency", 100))
 		g_iAutobuyClickFrequency := 100
-	if !IsInteger(g_iAutojumpFrequency := IniRead(l_sConfigFile, "General", "iAutojumpFrequency", 500))
-		g_iAutojumpFrequency := 500
+	if !IsInteger(g_iAutojumpFrequency := IniRead(l_sConfigFile, "General", "iAutojumpFrequency", 300))
+		g_iAutojumpFrequency := 300
 
 	; Mandatory keys
-	g_sActionKey       := IniRead(l_sConfigFile, "MandatoryKeys", "sActionKey", "f")
-	g_sBackwardKey     := IniRead(l_sConfigFile, "MandatoryKeys", "sBackwardKey", "s")
-	g_sForwardKey      := IniRead(l_sConfigFile, "MandatoryKeys", "sForwardKey", "w")
-	g_sJumpKey         := IniRead(l_sConfigFile, "MandatoryKeys", "sJumpKey", "Space")
-	g_sPlayerStatusKey := IniRead(l_sConfigFile, "MandatoryKeys", "sPlayerStatusKey", "z")
-	g_sQuickLoadKey    := IniRead(l_sConfigFile, "MandatoryKeys", "sQuickLoadKey", "F9")
-	g_sSteamOverlayKey := IniRead(l_sConfigFile, "MandatoryKeys", "sSteamOverlayKey", "ScrollLock")
+	g_sActionKey                := IniRead(l_sConfigFile, "MandatoryKeys", "sActionKey", "f")
+	g_sBackwardKey              := IniRead(l_sConfigFile, "MandatoryKeys", "sBackwardKey", "s")
+	g_sForwardKey               := IniRead(l_sConfigFile, "MandatoryKeys", "sForwardKey", "w")
+	g_sJumpKey                  := IniRead(l_sConfigFile, "MandatoryKeys", "sJumpKey", "Space")
+	g_sPlayerStatusKey          := IniRead(l_sConfigFile, "MandatoryKeys", "sPlayerStatusKey", "z")
+	g_sQuickLoadKey             := IniRead(l_sConfigFile, "MandatoryKeys", "sQuickLoadKey", "F9")
+	g_sSteamOverlayKey          := IniRead(l_sConfigFile, "MandatoryKeys", "sSteamOverlayKey", "ScrollLock")
 
 	; Optional keys
 	g_sFastAttackKey            := IniRead(l_sConfigFile, "OptionalKeys", "sFastAttackKey", "")
@@ -254,29 +254,29 @@ ReadConfigFile()
 	g_sToggleWalkKey            := IniRead(l_sConfigFile, "OptionalKeys", "sToggleWalkKey", "")
 
 	; Remappable keys
-	g_sLeftClickKey   := IniRead(l_sConfigFile, "RemappableKeys", "sLeftClickKey", "")
-	g_sMiddleClickKey := IniRead(l_sConfigFile, "RemappableKeys", "sMiddleClickKey", "")
-	g_sRightClickKey  := IniRead(l_sConfigFile, "RemappableKeys", "sRightClickKey", "")
-	g_sXButton1Key    := IniRead(l_sConfigFile, "RemappableKeys", "sXButton1Key", "")
-	g_sXButton2Key    := IniRead(l_sConfigFile, "RemappableKeys", "sXButton2Key", "")
+	g_sLeftClickKey             := IniRead(l_sConfigFile, "RemappableKeys", "sLeftClickKey", "")
+	g_sMiddleClickKey           := IniRead(l_sConfigFile, "RemappableKeys", "sMiddleClickKey", "")
+	g_sRightClickKey            := IniRead(l_sConfigFile, "RemappableKeys", "sRightClickKey", "")
+	g_sXButton1Key              := IniRead(l_sConfigFile, "RemappableKeys", "sXButton1Key", "")
+	g_sXButton2Key              := IniRead(l_sConfigFile, "RemappableKeys", "sXButton2Key", "")
 
 	; Prevent some variables from being negative or set to 0, otherwise timers won't work
 	g_iAutobuyClickFrequency := Max(g_iAutobuyClickFrequency, 1)
 	g_iAutojumpFrequency     := Max(g_iAutojumpFrequency, 1)
 }
 
-RegisterHotkey(p_sPrefix, p_sHotkey, p_fnAction, p_sSuffix := "", p_bSuspendExempt := false)
+RegisterHotkey(p_sPrefix, p_sHotkey, p_fnAction, p_bOnRelease := false, p_bSuspendExempt := false)
 {
 	; If the hotkey is empty, don't register it (allows keys like toggles to be optional)
 	if (p_sHotkey)
-		Hotkey(p_sPrefix p_sHotkey p_sSuffix, p_fnAction, p_bSuspendExempt ? "On S" : "On S0")
+		Hotkey(p_sPrefix p_sHotkey (p_bOnRelease ? " up" : ""), p_fnAction, p_bSuspendExempt ? "On S" : "On S0")
 }
 
 RegisterHotkeys()
 {
 	; Hotkeys fired only when Gothic is the active window
 	HotIfWinActive(g_sWindowTitle)
-		RegisterHotkey("*", g_sSteamOverlayKey, ToggleSteamOverlay, " up", true)
+		RegisterHotkey("*", g_sSteamOverlayKey, ToggleSteamOverlay, true, true)
 	HotIfWinActive()
 
 	; Hotkeys fired only when Gothic is the active window, the key isn't being held and the Steam overlay is not in the foreground
@@ -284,9 +284,9 @@ RegisterHotkeys()
 		RegisterHotkey("*~", g_sFastAttackKey, OnFastAttackPress)
 	HotIf((*) => WinActive(g_sWindowTitle) && ToggleStates.bAutoswim && g_bInvertControlsWhenAutoswimming && !ToggleStates.bSteamOverlay)
 		RegisterHotkey("*", g_sBackwardKey, (*) => Send("{" g_sForwardKey " down}"))
-		RegisterHotkey("*", g_sBackwardKey, (*) => Send("{" g_sForwardKey " up}"), " up")
+		RegisterHotkey("*", g_sBackwardKey, (*) => Send("{" g_sForwardKey " up}"), true)
 		RegisterHotkey("*", g_sForwardKey, (*) => Send("{" g_sBackwardKey " down}"))
-		RegisterHotkey("*", g_sForwardKey, (*) => Send("{" g_sBackwardKey " up}"), " up")
+		RegisterHotkey("*", g_sForwardKey, (*) => Send("{" g_sBackwardKey " up}"), true)
 	HotIf((*) => WinActive(g_sWindowTitle) && !HoldStates.bLooting && !ToggleStates.bSteamOverlay)
 		RegisterHotkey("*~", g_sLootKey, OnLootPress)
 	HotIf((*) => WinActive(g_sWindowTitle) && !HoldStates.bSmithing && !ToggleStates.bSteamOverlay)
@@ -294,27 +294,27 @@ RegisterHotkeys()
 	HotIf((*) => WinActive(g_sWindowTitle) && !HoldStates.bSneaking && !ToggleStates.bSteamOverlay)
 		RegisterHotkey("*~", g_sSneakKey, OnSneakPress)
 	HotIf((*) => WinActive(g_sWindowTitle) && HoldStates.bSneaking && !ToggleStates.bSteamOverlay)
-		RegisterHotkey("*~", g_sSneakKey, OnSneakRelease, " up")
+		RegisterHotkey("*~", g_sSneakKey, OnSneakRelease, true)
 	HotIf((*) => WinActive(g_sWindowTitle) && !HoldStates.bWalking && !ToggleStates.bSteamOverlay)
 		RegisterHotkey("*", g_sToggleWalkKey, OnWalkPress)
 	HotIf((*) => WinActive(g_sWindowTitle) && !MacroStates.bMarvin && !ToggleStates.bSteamOverlay)
-		RegisterHotkey("*~", g_sToggleMarvinModeKey, ToggleMarvinMode, " up", true)
+		RegisterHotkey("*~", g_sToggleMarvinModeKey, ToggleMarvinMode, true, true)
 
 	; Hotkeys fired only when Gothic is the active window and the Steam overlay is not in the foreground
 	HotIf((*) => WinActive(g_sWindowTitle) && !ToggleStates.bSteamOverlay)
-		RegisterHotkey("*~", g_sFastAttackKey, OnFastAttackRelease, " up")
+		RegisterHotkey("*~", g_sFastAttackKey, OnFastAttackRelease, true)
 		RegisterHotkey("*~", g_sForwardKey, (*) => ToggleStates.bAutorun := 0)
 		RegisterHotkey("*~", g_sJumpKey, OnJumpPress)
-		RegisterHotkey("*~", g_sLootKey, OnLootRelease, " up")
+		RegisterHotkey("*~", g_sLootKey, OnLootRelease, true)
 		RegisterHotkey("*~", g_sQuickLoadKey, (*) => ResetAll())
-		RegisterHotkey("*~", g_sSmithKey, OnSmithRelease, " up")
-		RegisterHotkey("*~", g_sToggleAutobuyKey, ToggleAutobuy, " up")
-		RegisterHotkey("*~", g_sToggleAutocookKey, ToggleAutocook, " up")
-		RegisterHotkey("*~", g_sToggleAutojumpKey, ToggleAutojump, " up")
-		RegisterHotkey("*~", g_sToggleAutorunKey, ToggleAutorun, " up")
-		RegisterHotkey("*~", g_sToggleAutoswimKey, ToggleAutoswim, " up")
-		RegisterHotkey("*~", g_sToggleFirstPersonModeKey, ToggleFirstPersonMode, " up")
-		RegisterHotkey("*",  g_sToggleWalkKey, OnWalkRelease, " up")
+		RegisterHotkey("*~", g_sSmithKey, OnSmithRelease, true)
+		RegisterHotkey("*~", g_sToggleAutobuyKey, ToggleAutobuy, true)
+		RegisterHotkey("*~", g_sToggleAutocookKey, ToggleAutocook, true)
+		RegisterHotkey("*~", g_sToggleAutojumpKey, ToggleAutojump, true)
+		RegisterHotkey("*~", g_sToggleAutorunKey, ToggleAutorun, true)
+		RegisterHotkey("*~", g_sToggleAutoswimKey, ToggleAutoswim, true)
+		RegisterHotkey("*~", g_sToggleFirstPersonModeKey, ToggleFirstPersonMode, true)
+		RegisterHotkey("*",  g_sToggleWalkKey, OnWalkRelease, true)
 	HotIf()
 }
 
@@ -334,7 +334,7 @@ ResetAll(p_bToggleOffCapsLock := true)
 	MacroStates.bMarvin := 0
 	ToggleStates.bAutobuy := ToggleStates.bAutocook := ToggleStates.bAutojump := ToggleStates.bAutorun := ToggleStates.bAutoswim := ToggleStates.bFirstPersonMode := 0
 
-	; Reset Caps Lock
+	; Reset Walk toggle
 	if (p_bToggleOffCapsLock)
 		SetCapsLockState(ToggleStates.bWalk := 0)
 }
@@ -357,8 +357,7 @@ SendJump()
 SendKey(p_sKey)
 {
 	Send("{Blind}{" p_sKey " down}")
-	Sleep(25)
-	Send("{Blind}{" p_sKey " up}")
+	SetTimer(() => Send("{Blind}{" p_sKey " up}"), -25)
 }
 
 SendLeftMouseButton()
@@ -369,15 +368,13 @@ SendLeftMouseButton()
 ; Buy/Sell/Use in bulk (highlight the desired item beforehand)
 ToggleAutobuy(*)
 {
-	ToggleStates.bAutobuy ^= 1
-
 	if (g_bAutobuyStacks)
-		Send(ToggleStates.bAutobuy ? "{LShift down}" : "{LShift up}")
+		Send(ToggleStates.bAutobuy ^= 1 ? "{LShift down}" : "{LShift up}")
 	else
-		Send(ToggleStates.bAutobuy ? "{" g_sActionKey " down}" :  "{" g_sActionKey " up}")
+		Send(ToggleStates.bAutobuy ^= 1 ? "{" g_sActionKey " down}" :  "{" g_sActionKey " up}")
 
 	; Spam left-click to buy/sell/use items faster
-	SetTimer(SendLeftMouseButton, ToggleStates.bAutobuy * g_iAutobuyClickFrequency)
+	SetTimer(SendLeftMouseButton, g_iAutobuyClickFrequency * ToggleStates.bAutobuy)
 }
 
 ; Autocook (you must be looking at a fireplace/pan and be within range beforehand)
@@ -393,7 +390,7 @@ ToggleAutojump(*)
 	SendJump()
 
 	; Continuously spam jump, should be combined with autorun
-	SetTimer(SendJump, ToggleStates.bAutojump * g_iAutojumpFrequency)
+	SetTimer(SendJump, g_iAutojumpFrequency * ToggleStates.bAutojump)
 }
 
 ; Autorun (shouldn't be used underwater)
@@ -449,6 +446,7 @@ ToggleSteamOverlay(*)
 	if (ToggleStates.bAutobuy)
 		ToggleAutobuy()
 
+	; Pressing LShift may toggle walk so we need to restore CapsLock to its previous value after LShift is released
 	l_bPrevCapsLockState := GetKeyState("CapsLock", "T")
 	KeyWait("LShift")
 	SetCapsLockState(l_bPrevCapsLockState)
@@ -523,11 +521,11 @@ ToggleSteamOverlay(*)
 
 	; Manually suspending the script should force exempted hotkeys to also be suspended
 	HotIfWinActive(g_sWindowTitle)
-	RegisterHotkey("*", g_sSteamOverlayKey, ToggleSteamOverlay, " up", !A_IsSuspended)
+	RegisterHotkey("*", g_sSteamOverlayKey, ToggleSteamOverlay, true, !A_IsSuspended)
 	HotIfWinActive()
 
 	HotIf((*) => WinActive(g_sWindowTitle) && !MacroStates.bMarvin && !ToggleStates.bSteamOverlay)
-	RegisterHotkey("*~", g_sToggleMarvinModeKey, ToggleMarvinMode, " up", !A_IsSuspended)
+	RegisterHotkey("*~", g_sToggleMarvinModeKey, ToggleMarvinMode, true, !A_IsSuspended)
 	HotIf()
 
 	; Single beep when suspended
