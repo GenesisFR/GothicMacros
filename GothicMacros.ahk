@@ -18,13 +18,10 @@ class HoldStates
 {
 	static bFastAttacking := 0
 	static bLooting       := 0
+	static bMarvinning    := 0
 	static bSmithing      := 0
 	static bSneaking      := 0
 	static bWalking       := 0
-}
-
-class MacroStates {
-	static bMarvin := 0
 }
 
 class ToggleStates
@@ -90,19 +87,19 @@ Marvin(p_iStep := 1)
 	{
 		; Open the player status menu
 		case 1:
-			SendKey(g_sPlayerStatusKey)
-			SetTimer(Marvin.Bind(2), -100 * MacroStates.bMarvin ^= 1)
+			TapKey(g_sPlayerStatusKey)
+			SetTimer(Marvin.Bind(2), -100 * HoldStates.bMarvinning ^= 1)
 		; Toggle Marvin mode
 		case 2:
 			Send(ToggleStates.bMarvinMode ? "marvin" : "42")
-			SetTimer(Marvin.Bind(3), -100 * MacroStates.bMarvin)
+			SetTimer(Marvin.Bind(3), -100 * HoldStates.bMarvinning)
 		; Close the player status menu
 		case 3:
-			SendKey(g_sPlayerStatusKey)
-			SetTimer(Marvin.Bind(4), -100 * MacroStates.bMarvin)
+			TapKey(g_sPlayerStatusKey)
+			SetTimer(Marvin.Bind(4), -100 * HoldStates.bMarvinning)
 		; Allow Marvin mode to be toggled again
 		case 4:
-			SetTimer(Marvin, MacroStates.bMarvin := 0)
+			SetTimer(Marvin, HoldStates.bMarvinning := 0)
 	}
 }
 
@@ -131,30 +128,30 @@ OnFocusChanged(*)
 ; Turn off autojump
 OnJumpPress(*)
 {
-	SetTimer(SendJump, ToggleStates.bAutojump := ToggleStates.bAutoswim := 0)
+	SetTimer(TapJump, ToggleStates.bAutojump := ToggleStates.bAutoswim := 0)
 }
 
 OnLootPress(*)
 {
-	SendKey(g_sActionKey)
-	SetTimer(SendAction, 200 * HoldStates.bLooting := 1)
+	TapKey(g_sActionKey)
+	SetTimer(TapAction, 200 * HoldStates.bLooting := 1)
 }
 
 OnLootRelease(*)
 {
-	SetTimer(SendAction, HoldStates.bLooting := 0)
+	SetTimer(TapAction, HoldStates.bLooting := 0)
 }
 
 ; Tap the Action key then spam Backward until the Smithing key is released
 OnSmithPress(*)
 {
-	SendKey(g_sActionKey)
-	SetTimer(SendBackward, 200 * HoldStates.bSmithing := 1)
+	TapKey(g_sActionKey)
+	SetTimer(TapBackward, 200 * HoldStates.bSmithing := 1)
 }
 
 OnSmithRelease(*)
 {
-	SetTimer(SendBackward, HoldStates.bSmithing := 0)
+	SetTimer(TapBackward, HoldStates.bSmithing := 0)
 }
 
 OnSneakOffAnimComplete()
@@ -297,7 +294,7 @@ RegisterHotkeys()
 		RegisterHotkey("*~", g_sSneakKey, OnSneakRelease, true)
 	HotIf((*) => WinActive(g_sWindowTitle) && !HoldStates.bWalking && !ToggleStates.bSteamOverlay)
 		RegisterHotkey("*", g_sToggleWalkKey, OnWalkPress)
-	HotIf((*) => WinActive(g_sWindowTitle) && !MacroStates.bMarvin && !ToggleStates.bSteamOverlay)
+	HotIf((*) => WinActive(g_sWindowTitle) && !HoldStates.bMarvinning && !ToggleStates.bSteamOverlay)
 		RegisterHotkey("*~", g_sToggleMarvinModeKey, ToggleMarvinMode, true, true)
 
 	; Hotkeys fired only when Gothic is the active window and the Steam overlay is not in the foreground
@@ -321,7 +318,7 @@ RegisterHotkeys()
 ResetAll(p_bToggleOffCapsLock := true)
 {
 	; Delete timers
-	for l_fnTimer in [Cook, Marvin, OnSneakOffAnimComplete, SendAction, SendBackward, SendJump, SendLeftMouseButton, ToggleSneakOff]
+	for l_fnTimer in [Cook, Marvin, OnSneakOffAnimComplete, TapAction, TapBackward, TapJump, TapLeftMouseButton, ToggleSneakOff]
 		SetTimer(l_fnTimer, 0)
 
 	; Release keys
@@ -330,8 +327,7 @@ ResetAll(p_bToggleOffCapsLock := true)
 
 	; Reset states
 	AnimationStates.iSneakTimePressed := 0
-	HoldStates.bFastAttacking := HoldStates.bSmithing := HoldStates.bSneaking := HoldStates.bWalking := 0
-	MacroStates.bMarvin := 0
+	HoldStates.bFastAttacking := HoldStates.bMarvinning := HoldStates.bSmithing := HoldStates.bSneaking := HoldStates.bWalking := 0
 	ToggleStates.bAutobuy := ToggleStates.bAutocook := ToggleStates.bAutojump := ToggleStates.bAutorun := ToggleStates.bAutoswim := ToggleStates.bFirstPersonMode := 0
 
 	; Reset Walk toggle
@@ -339,30 +335,30 @@ ResetAll(p_bToggleOffCapsLock := true)
 		SetCapsLockState(ToggleStates.bWalk := 0)
 }
 
-SendAction()
+TapAction()
 {
-	SendKey(g_sActionKey)
+	TapKey(g_sActionKey)
 }
 
-SendBackward()
+TapBackward()
 {
-	SendKey(g_sBackwardKey)
+	TapKey(g_sBackwardKey)
 }
 
-SendJump()
+TapJump()
 {
-	SendKey(g_sJumpKey)
+	TapKey(g_sJumpKey)
 }
 
-SendKey(p_sKey)
+TapKey(p_sKey)
 {
 	Send("{Blind}{" p_sKey " down}")
 	SetTimer(() => Send("{Blind}{" p_sKey " up}"), -25)
 }
 
-SendLeftMouseButton()
+TapLeftMouseButton()
 {
-	SendKey("LButton")
+	TapKey("LButton")
 }
 
 ; Buy/Sell/Use in bulk (highlight the desired item beforehand)
@@ -374,7 +370,7 @@ ToggleAutobuy(*)
 		Send((ToggleStates.bAutobuy ^= 1) ? "{" g_sActionKey " down}" :  "{" g_sActionKey " up}")
 
 	; Spam left-click to buy/sell/use items faster
-	SetTimer(SendLeftMouseButton, g_iAutobuyClickFrequency * ToggleStates.bAutobuy)
+	SetTimer(TapLeftMouseButton, g_iAutobuyClickFrequency * ToggleStates.bAutobuy)
 }
 
 ; Autocook (you must be looking at a fireplace/pan and be within range beforehand)
@@ -387,10 +383,10 @@ ToggleAutocook(*)
 ToggleAutojump(*)
 {
 	ToggleStates.bAutojump ^= 1
-	SendJump()
+	TapJump()
 
 	; Continuously spam jump, should be combined with autorun
-	SetTimer(SendJump, g_iAutojumpFrequency * ToggleStates.bAutojump)
+	SetTimer(TapJump, g_iAutojumpFrequency * ToggleStates.bAutojump)
 }
 
 ; Autorun (shouldn't be used underwater)
@@ -423,7 +419,7 @@ ToggleMarvinMode(*)
 ToggleSneakOff()
 {
 	Output(A_ThisFunc)
-	SendKey(g_sSneakKey)
+	TapKey(g_sSneakKey)
 
 	; Wait until the animation is over before allowing the Sneak key to be pressed again
 	SetTimer(OnSneakOffAnimComplete, -AnimationStates.GetSneakAnimDuration())
@@ -431,11 +427,11 @@ ToggleSneakOff()
 
 ToggleSteamOverlay(*)
 {
-	if (!MacroStates.bMarvin)
+	if (!HoldStates.bMarvinning)
 	{
 		Output("Steam overlay toggled " ((ToggleStates.bSteamOverlay ^= 1) ? "on" : "off"))
 		ResetAll()
-		SendKey(g_sSteamOverlayKey)
+		TapKey(g_sSteamOverlayKey)
 	}
 }
 
@@ -521,11 +517,11 @@ ToggleSteamOverlay(*)
 
 	; Manually suspending the script should force exempted hotkeys to also be suspended
 	HotIfWinActive(g_sWindowTitle)
-	RegisterHotkey("*", g_sSteamOverlayKey, ToggleSteamOverlay, true, !A_IsSuspended)
+		RegisterHotkey("*", g_sSteamOverlayKey, ToggleSteamOverlay, true, !A_IsSuspended)
 	HotIfWinActive()
 
-	HotIf((*) => WinActive(g_sWindowTitle) && !MacroStates.bMarvin && !ToggleStates.bSteamOverlay)
-	RegisterHotkey("*~", g_sToggleMarvinModeKey, ToggleMarvinMode, true, !A_IsSuspended)
+	HotIf((*) => WinActive(g_sWindowTitle) && !HoldStates.bMarvinning && !ToggleStates.bSteamOverlay)
+		RegisterHotkey("*~", g_sToggleMarvinModeKey, ToggleMarvinMode, true, !A_IsSuspended)
 	HotIf()
 
 	; Single beep when suspended
