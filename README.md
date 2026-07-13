@@ -53,9 +53,9 @@ Moreover, all mouse buttons can be remapped to other keys (except right-click wh
 
 - `Escape`: stops and resets all macros
 - `LButton`, `RButton`, `Shift + LButton`: stops and resets the autobuy macro
-- `Ctrl + Left ALT + F10`: closes the script  
-- `Ctrl + Left ALT + F11`: reloads the script  
-- `Ctrl + Left ALT + F12`: suspends/unsuspends the script (stops and resets all macros, disables all hotkeys)
+- `LCtrl + LAlt + F10`: closes the script  
+- `LCtrl + LAlt + F11`: reloads the script  
+- `LCtrl + LAlt + F12`: suspends/unsuspends the script (stops and resets all macros, disables all hotkeys)
 
 ## Useful in-game hotkeys
 
@@ -66,8 +66,9 @@ Moreover, all mouse buttons can be remapped to other keys (except right-click wh
 ## Limitations
 
 - Hotkeys using modifiers (ex: `^k` aka `Ctrl + K`) may not work.
+- Left-click and right-click have hardcoded behavior in some instances (for example, left-click acts as `Action` with a weapon drawn) that'll persist after remaps.
 - Some macros (such as autobuy) don't work without `Gothic2_Control=1` in `SystemPack.ini`.
-- The game must be in a clean state (Steam overlay hidden, character standing up, no menu open) before running the script, otherwise the script's internal states will not match the actual states so it won't work properly.
+- The game must be in a clean state (Steam overlay hidden, character standing up, no menu open) before running the script, otherwise its internal states will not match the actual states in the game and it won't work properly.
 
 ## Credits
 
