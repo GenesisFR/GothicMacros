@@ -21,7 +21,6 @@ class HoldStates
 	static bMarvinning    := 0
 	static bSmithing      := 0
 	static bSneaking      := 0
-	static bWalking       := 0
 }
 
 class ToggleStates
@@ -34,7 +33,7 @@ class ToggleStates
 	static bFirstPersonMode := 0
 	static bMarvinMode      := 0
 	static bSteamOverlay    := 0
-	static bWalk            := 0
+	static bWalk            := GetKeyState("CapsLock", "T")
 }
 
 Init()
@@ -188,21 +187,6 @@ OnSneakRelease(*)
 	}
 }
 
-OnWalkPress(*)
-{
-	HoldStates.bWalking := 1
-	Send("{Blind}{" g_sToggleWalkKey " down}")
-}
-
-OnWalkRelease(*)
-{
-	HoldStates.bWalking := 0
-	Send("{Blind}{" g_sToggleWalkKey " up}")
-
-	; We need to sync CapsLock with the Walk toggle state
-	SetCapsLockState(ToggleStates.bWalk ^= 1)
-}
-
 Output(p_sMsg := "")
 {
 	OutputDebug(p_sMsg "`n")
@@ -292,8 +276,6 @@ RegisterHotkeys()
 		RegisterHotkey("*~", g_sSneakKey, OnSneakPress)
 	HotIf((*) => WinActive(g_sWindowTitle) && HoldStates.bSneaking && !ToggleStates.bSteamOverlay)
 		RegisterHotkey("*~", g_sSneakKey, OnSneakRelease, true)
-	HotIf((*) => WinActive(g_sWindowTitle) && !HoldStates.bWalking && !ToggleStates.bSteamOverlay)
-		RegisterHotkey("*", g_sToggleWalkKey, OnWalkPress)
 	HotIf((*) => WinActive(g_sWindowTitle) && !HoldStates.bMarvinning && !ToggleStates.bSteamOverlay)
 		RegisterHotkey("*~", g_sToggleMarvinModeKey, ToggleMarvinMode, true, true)
 
@@ -311,7 +293,7 @@ RegisterHotkeys()
 		RegisterHotkey("*~", g_sToggleAutorunKey, ToggleAutorun, true)
 		RegisterHotkey("*~", g_sToggleAutoswimKey, ToggleAutoswim, true)
 		RegisterHotkey("*~", g_sToggleFirstPersonModeKey, ToggleFirstPersonMode, true)
-		RegisterHotkey("*",  g_sToggleWalkKey, OnWalkRelease, true)
+		RegisterHotkey("*~", g_sToggleWalkKey, ToggleWalk, true)
 	HotIf()
 }
 
@@ -327,7 +309,7 @@ ResetAll(p_bToggleOffCapsLock := true)
 
 	; Reset states
 	AnimationStates.iSneakTimePressed := 0
-	HoldStates.bFastAttacking := HoldStates.bMarvinning := HoldStates.bSmithing := HoldStates.bSneaking := HoldStates.bWalking := 0
+	HoldStates.bFastAttacking := HoldStates.bMarvinning := HoldStates.bSmithing := HoldStates.bSneaking := 0
 	ToggleStates.bAutobuy := ToggleStates.bAutocook := ToggleStates.bAutojump := ToggleStates.bAutorun := ToggleStates.bAutoswim := ToggleStates.bFirstPersonMode := 0
 
 	; Reset Walk toggle
@@ -435,6 +417,12 @@ ToggleSteamOverlay(*)
 	}
 }
 
+ToggleWalk(*)
+{
+	; Sync CapsLock with the Walk toggle state
+	SetCapsLockState(ToggleStates.bWalk ^= 1)
+}
+
 ; When doing Shift + left-click to buy stacks of 100 items
 #HotIf WinActive(g_sWindowTitle) && g_sToggleWalkKey && !ToggleStates.bSteamOverlay
 <+LButton::
@@ -503,6 +491,9 @@ ToggleSteamOverlay(*)
 	ToggleStates.bSteamOverlay := 0
 }
 #HotIf
+
+; Sync the Walk toggle state with CapsLock
+~CapsLock up::ToggleStates.bWalk := GetKeyState("CapsLock", "T")
 
 ; Exit script (CTRL + ALT + F10)
 *~^!F10::ExitApp()
