@@ -59,6 +59,14 @@ Init()
 			"Int", 0)
 
 	OnExit((*) => ResetAll())
+
+	if (g_bRunGameOnStartup)
+	{
+		if WinExist(g_sWindowTitle)
+			WinActivate()
+		else
+			Run("steam://launch/65540/dialog")
+	}
 }
 
 Cook(p_iStep := 1)
@@ -203,6 +211,7 @@ ReadConfigFile()
 	g_bBeepOnSuspend                  := IniRead(l_sConfigFile, "General", "bBeepOnSuspend", true) == true
 	g_bForceShiftEscape               := IniRead(l_sConfigFile, "General", "bForceShiftEscape", false) == true
 	g_bInvertControlsWhenAutoswimming := IniRead(l_sConfigFile, "General", "bInvertControlsWhenAutoswimming", false) == true
+	g_bRunGameOnStartup               := IniRead(l_sConfigFile, "General", "bRunGameOnStartup", false) == true
 	g_bSuspendDuringMarvinMode        := IniRead(l_sConfigFile, "General", "bSuspendDuringMarvinMode", true) == true
 	g_bWaitForSneakAnimation          := IniRead(l_sConfigFile, "General", "bWaitForSneakAnimation", false) == true
 
