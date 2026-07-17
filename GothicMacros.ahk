@@ -16,9 +16,11 @@ class AnimationStates
 
 class HoldStates
 {
+	static bEscaping      := 0
 	static bFastAttacking := 0
 	static bLooting       := 0
 	static bMarvinning    := 0
+	static bPlayerStating := 0
 	static bSmithing      := 0
 	static bSneaking      := 0
 }
@@ -94,11 +96,12 @@ Marvin(p_iStep := 1)
 	{
 		; Open the player status menu
 		case 1:
+			Output("Marvin macro started")
 			TapKey(g_sPlayerStatusKey)
-			SetTimer(Marvin.Bind(2), -100 * HoldStates.bMarvinning ^= 1)
+			SetTimer(Marvin.Bind(2), -100 * HoldStates.bMarvinning := 1)
 		; Toggle Marvin mode
 		case 2:
-			Send(ToggleStates.bMarvinMode ? "marvin" : "42")
+			Send(!ToggleStates.bMarvinMode ? "marvin" : "42")
 			SetTimer(Marvin.Bind(3), -100 * HoldStates.bMarvinning)
 		; Close the player status menu
 		case 3:
@@ -106,7 +109,14 @@ Marvin(p_iStep := 1)
 			SetTimer(Marvin.Bind(4), -100 * HoldStates.bMarvinning)
 		; Allow Marvin mode to be toggled again
 		case 4:
+			Output("Marvin mode toggled " ((ToggleStates.bMarvinMode ^= 1) ? "on" : "off"))
 			SetTimer(Marvin, HoldStates.bMarvinning := 0)
+
+			if (g_bSuspendDuringMarvinMode)
+			{
+				Output((ToggleStates.bMarvinMode ? "S" : "Un") "uspending script")
+				Suspend(ToggleStates.bMarvinMode)
+			}
 	}
 }
 
@@ -147,6 +157,21 @@ OnLootPress(*)
 OnLootRelease(*)
 {
 	SetTimer(TapAction, HoldStates.bLooting := 0)
+}
+
+OnPlayerStatusPress(*)
+{
+	if (!HoldStates.bMarvinning)
+	{
+		HoldStates.bPlayerStating := 1
+		Send("{" g_sPlayerStatusKey " down}")
+	}
+}
+
+OnPlayerStatusRelease(*)
+{
+	HoldStates.bPlayerStating := 0
+	Send("{" g_sPlayerStatusKey " up}")
 }
 
 ; Tap the Action key then spam Backward until the Smithing key is released
@@ -279,6 +304,8 @@ RegisterHotkeys()
 		RegisterHotkey("*", g_sForwardKey, (*) => Send("{" g_sBackwardKey " up}"), true)
 	HotIf((*) => WinActive(g_sWindowTitle) && !HoldStates.bLooting && !ToggleStates.bSteamOverlay)
 		RegisterHotkey("*~", g_sLootKey, OnLootPress)
+	HotIf((*) => WinActive(g_sWindowTitle) && !HoldStates.bPlayerStating && !ToggleStates.bSteamOverlay)
+		RegisterHotkey("*", g_sPlayerStatusKey, OnPlayerStatusPress, false, true)
 	HotIf((*) => WinActive(g_sWindowTitle) && !HoldStates.bSmithing && !ToggleStates.bSteamOverlay)
 		RegisterHotkey("*~", g_sSmithKey, OnSmithPress)
 	HotIf((*) => WinActive(g_sWindowTitle) && !HoldStates.bSneaking && !ToggleStates.bSteamOverlay)
@@ -294,6 +321,7 @@ RegisterHotkeys()
 		RegisterHotkey("*~", g_sForwardKey, (*) => ToggleStates.bAutorun := 0)
 		RegisterHotkey("*~", g_sJumpKey, OnJumpPress)
 		RegisterHotkey("*~", g_sLootKey, OnLootRelease, true)
+		RegisterHotkey("*", g_sPlayerStatusKey, OnPlayerStatusRelease, true, true)
 		RegisterHotkey("*~", g_sQuickLoadKey, (*) => ResetAll())
 		RegisterHotkey("*~", g_sSmithKey, OnSmithRelease, true)
 		RegisterHotkey("*~", g_sToggleAutobuyKey, ToggleAutobuy, true)
@@ -317,6 +345,9 @@ ResetAll(p_bToggleOffCapsLock := true)
 		Send("{Blind}{" l_sKey " up}")
 
 	; Reset states
+	if (HoldStates.bMarvinning)
+		Output("Marvin macro interrupted")
+
 	AnimationStates.iSneakTimePressed := 0
 	HoldStates.bFastAttacking := HoldStates.bMarvinning := HoldStates.bSmithing := HoldStates.bSneaking := 0
 	ToggleStates.bAutobuy := ToggleStates.bAutocook := ToggleStates.bAutojump := ToggleStates.bAutorun := ToggleStates.bAutoswim := ToggleStates.bFirstPersonMode := 0
@@ -399,12 +430,8 @@ ToggleFirstPersonMode(*)
 
 ToggleMarvinMode(*)
 {
-	Output("Marvin mode toggled " ((ToggleStates.bMarvinMode ^= 1) ? "on" : "off"))
 	ResetAll()
 	Marvin()
-
-	if (g_bSuspendDuringMarvinMode)
-		Suspend(ToggleStates.bMarvinMode)
 }
 
 ToggleSneakOff()
@@ -470,13 +497,6 @@ ToggleWalk(*)
 *$XButton2::Send("{" g_sXButton2Key " down}")
 *$XButton2 up::Send("{" g_sXButton2Key " up}")
 
-#HotIf WinActive(g_sWindowTitle) && !GetKeyState("Escape", "P") && !ToggleStates.bSteamOverlay
-*$Escape::
-{
-	ResetAll(false)
-	Send((g_bForceShiftEscape ? "+" : "") "{Escape}")
-}
-
 #HotIf WinActive(g_sWindowTitle) && !ToggleStates.bSteamOverlay
 *~LButton::
 *~RButton::
@@ -491,6 +511,21 @@ ToggleWalk(*)
 #HotIf WinActive("Visual Studio Code") && InStr(WinGetTitle("A"), A_ScriptName)
 ~^s::Send("^+{F5}")
 ;@Ahk2Exe-IgnoreEnd
+
+#HotIf WinActive(g_sWindowTitle) && !ToggleStates.bSteamOverlay && !HoldStates.bEscaping
+*Escape::
+{
+	if (!HoldStates.bMarvinning)
+	{
+		HoldStates.bEscaping := 1
+
+		ResetAll(false)
+		Send("{Blind}" (g_bForceShiftEscape ? "+" : "") "{Escape}")
+	}
+}
+
+#HotIf WinActive(g_sWindowTitle) && !ToggleStates.bSteamOverlay
+*Escape up::HoldStates.bEscaping := 0
 
 ; Escape can also be used to close the Steam overlay
 #HotIf WinActive(g_sWindowTitle) && ToggleStates.bSteamOverlay
@@ -516,12 +551,12 @@ ToggleWalk(*)
 	Suspend()
 
 	; Manually suspending the script should force exempted hotkeys to also be suspended
-	HotIfWinActive(g_sWindowTitle)
-		RegisterHotkey("*", g_sSteamOverlayKey, ToggleSteamOverlay, true, !A_IsSuspended)
-	HotIfWinActive()
-
-	HotIf((*) => WinActive(g_sWindowTitle) && !HoldStates.bMarvinning && !ToggleStates.bSteamOverlay)
+	HotIf((*) => WinActive(g_sWindowTitle) && !ToggleStates.bSteamOverlay && !HoldStates.bPlayerStating)
+		RegisterHotkey("*", g_sPlayerStatusKey, OnPlayerStatusPress, false, !A_IsSuspended)
+	HotIf((*) => WinActive(g_sWindowTitle) && !ToggleStates.bSteamOverlay && !HoldStates.bMarvinning)
 		RegisterHotkey("*~", g_sToggleMarvinModeKey, ToggleMarvinMode, true, !A_IsSuspended)
+	HotIf((*) => WinActive(g_sWindowTitle))
+		RegisterHotkey("*", g_sSteamOverlayKey, ToggleSteamOverlay, true, !A_IsSuspended)
 	HotIf()
 
 	; Single beep when suspended
