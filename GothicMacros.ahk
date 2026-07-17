@@ -114,7 +114,7 @@ Marvin(p_iStep := 1)
 
 			if (g_bSuspendDuringMarvinMode)
 			{
-				Output((ToggleStates.bMarvinMode ? "S" : "Un") "uspending script")
+				Output((ToggleStates.bMarvinMode ? "S" : "Uns") "uspending script")
 				Suspend(ToggleStates.bMarvinMode)
 			}
 	}
@@ -289,32 +289,26 @@ RegisterHotkey(p_sPrefix, p_sHotkey, p_fnAction, p_bOnRelease := false, p_bSuspe
 
 RegisterHotkeys()
 {
-	; Hotkeys fired only when Gothic is the active window
-	HotIfWinActive(g_sWindowTitle)
-		RegisterHotkey("*", g_sSteamOverlayKey, ToggleSteamOverlay, true, true)
-	HotIfWinActive()
-
-	; Hotkeys fired only when Gothic is the active window, the key isn't being held and the Steam overlay is not in the foreground
-	HotIf((*) => WinActive(g_sWindowTitle) && !HoldStates.bFastAttacking && !ToggleStates.bSteamOverlay)
-		RegisterHotkey("*~", g_sFastAttackKey, OnFastAttackPress)
-	HotIf((*) => WinActive(g_sWindowTitle) && ToggleStates.bAutoswim && g_bInvertControlsWhenAutoswimming && !ToggleStates.bSteamOverlay)
+	; Hotkeys fired only when Gothic is the active window, the Steam overlay is not in the foreground and the key isn't being held
+	HotIf((*) => WinActive(g_sWindowTitle) && !ToggleStates.bSteamOverlay && ToggleStates.bAutoswim && g_bInvertControlsWhenAutoswimming)
 		RegisterHotkey("*", g_sBackwardKey, (*) => Send("{" g_sForwardKey " down}"))
 		RegisterHotkey("*", g_sBackwardKey, (*) => Send("{" g_sForwardKey " up}"), true)
 		RegisterHotkey("*", g_sForwardKey, (*) => Send("{" g_sBackwardKey " down}"))
 		RegisterHotkey("*", g_sForwardKey, (*) => Send("{" g_sBackwardKey " up}"), true)
-	HotIf((*) => WinActive(g_sWindowTitle) && !HoldStates.bLooting && !ToggleStates.bSteamOverlay)
+	HotIf((*) => WinActive(g_sWindowTitle) && !ToggleStates.bSteamOverlay && !HoldStates.bFastAttacking)
+		RegisterHotkey("*~", g_sFastAttackKey, OnFastAttackPress)
+	HotIf((*) => WinActive(g_sWindowTitle) && !ToggleStates.bSteamOverlay && !HoldStates.bLooting)
 		RegisterHotkey("*~", g_sLootKey, OnLootPress)
-	HotIf((*) => WinActive(g_sWindowTitle) && !HoldStates.bPlayerStating && !ToggleStates.bSteamOverlay)
+	HotIf((*) => WinActive(g_sWindowTitle) && !ToggleStates.bSteamOverlay && !HoldStates.bPlayerStating)
 		RegisterHotkey("*", g_sPlayerStatusKey, OnPlayerStatusPress, false, true)
-	HotIf((*) => WinActive(g_sWindowTitle) && !HoldStates.bSmithing && !ToggleStates.bSteamOverlay)
+	HotIf((*) => WinActive(g_sWindowTitle) && !ToggleStates.bSteamOverlay && !HoldStates.bSmithing)
 		RegisterHotkey("*~", g_sSmithKey, OnSmithPress)
-	HotIf((*) => WinActive(g_sWindowTitle) && !HoldStates.bSneaking && !ToggleStates.bSteamOverlay)
+	HotIf((*) => WinActive(g_sWindowTitle) && !ToggleStates.bSteamOverlay && !HoldStates.bSneaking)
 		RegisterHotkey("*~", g_sSneakKey, OnSneakPress)
-	HotIf((*) => WinActive(g_sWindowTitle) && HoldStates.bSneaking && !ToggleStates.bSteamOverlay)
+	HotIf((*) => WinActive(g_sWindowTitle) && !ToggleStates.bSteamOverlay && HoldStates.bSneaking)
 		RegisterHotkey("*~", g_sSneakKey, OnSneakRelease, true)
-	HotIf((*) => WinActive(g_sWindowTitle) && !HoldStates.bMarvinning && !ToggleStates.bSteamOverlay)
+	HotIf((*) => WinActive(g_sWindowTitle) && !ToggleStates.bSteamOverlay && !HoldStates.bMarvinning)
 		RegisterHotkey("*~", g_sToggleMarvinModeKey, ToggleMarvinMode, true, true)
-
 	; Hotkeys fired only when Gothic is the active window and the Steam overlay is not in the foreground
 	HotIf((*) => WinActive(g_sWindowTitle) && !ToggleStates.bSteamOverlay)
 		RegisterHotkey("*~", g_sFastAttackKey, OnFastAttackRelease, true)
@@ -331,6 +325,9 @@ RegisterHotkeys()
 		RegisterHotkey("*~", g_sToggleAutoswimKey, ToggleAutoswim, true)
 		RegisterHotkey("*~", g_sToggleFirstPersonModeKey, ToggleFirstPersonMode, true)
 		RegisterHotkey("*~", g_sToggleWalkKey, ToggleWalk, true)
+	; Hotkeys fired only when Gothic is the active window
+	HotIf((*) => WinActive(g_sWindowTitle))
+		RegisterHotkey("*", g_sSteamOverlayKey, ToggleSteamOverlay, true, true)
 	HotIf()
 }
 
