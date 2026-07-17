@@ -427,7 +427,7 @@ ToggleFirstPersonMode(*)
 
 ToggleMarvinMode(*)
 {
-	ResetAll()
+	ResetAll(false)
 	Marvin()
 }
 
