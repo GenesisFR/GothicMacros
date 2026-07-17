@@ -48,6 +48,14 @@ Init()
 	ReadConfigFile()
 	RegisterHotkeys()
 
+	if (g_bRunGameOnStartup)
+	{
+		if WinExist(g_sWindowTitle)
+			WinActivate()
+		else
+			Run("steam://launch/65540/dialog")
+	}
+
 	; Set an event hook to detect when the game window loses focus
 	DllCall("user32\SetWinEventHook",
 			"Int", EVENT_SYSTEM_FOREGROUND := 0x0003,
@@ -59,14 +67,6 @@ Init()
 			"Int", 0)
 
 	OnExit((*) => ResetAll())
-
-	if (g_bRunGameOnStartup)
-	{
-		if WinExist(g_sWindowTitle)
-			WinActivate()
-		else
-			Run("steam://launch/65540/dialog")
-	}
 }
 
 Cook(p_iStep := 1)
